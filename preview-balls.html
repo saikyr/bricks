@@ -1,0 +1,1195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Ball Design Preview</title>
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@700;800;900&display=swap" rel="stylesheet" />
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { background: #060612; color: #f0f0f0; font-family: 'Nunito', sans-serif; padding: 30px; }
+    h1 { text-align: center; font-size: 28px; margin-bottom: 8px; color: #7cecff; }
+    .subtitle { text-align: center; color: #888; font-size: 14px; margin-bottom: 30px; }
+    .section { margin-bottom: 40px; }
+    .section h2 { font-size: 20px; margin-bottom: 6px; }
+    .section .desc { color: #888; font-size: 13px; margin-bottom: 14px; }
+    .row { display: flex; gap: 24px; flex-wrap: wrap; justify-content: center; }
+    .card {
+      background: #0e0e24;
+      border: 1px solid #222;
+      border-radius: 12px;
+      padding: 16px;
+      width: 260px;
+      text-align: center;
+    }
+    .card h3 { font-size: 15px; margin-bottom: 4px; }
+    .card .tag { font-size: 11px; color: #888; margin-bottom: 10px; }
+    .card canvas { display: block; margin: 0 auto 10px; border-radius: 8px; background: #060612; }
+    .card ul { text-align: left; font-size: 12px; color: #aaa; list-style: none; padding: 0; }
+    .card ul li { margin-bottom: 3px; }
+    .card ul li::before { content: "- "; color: #555; }
+    .current { border-color: #ffaa33; }
+    .current h3::after { content: " (current)"; color: #ffaa33; font-size: 11px; }
+  </style>
+</head>
+<body>
+
+<h1>Ball Type Visual Preview</h1>
+<p class="subtitle">Each ball animates in real-time with trail. Normal at base size; special balls at 1.6x.</p>
+
+<div class="section">
+  <h2 style="color:#ccddff">Normal Ball</h2>
+  <div class="desc">Plain white sphere. Intentionally simple baseline.</div>
+  <div class="row">
+    <div class="card current">
+      <h3>Normal</h3>
+      <div class="tag">white sphere + cyan glow</div>
+      <canvas id="normal" width="240" height="160"></canvas>
+      <ul>
+        <li>White spherical gradient</li>
+        <li>Specular highlight dot</li>
+        <li>Cyan glow halo</li>
+        <li>Fading dot trail</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<div class="section">
+  <h2 style="color:#4affb7">Spectral Ball</h2>
+  <div class="desc">Ghost/ethereal ball that phases through enemies. Should look translucent and otherworldly.</div>
+  <div class="row">
+    <div class="card current">
+      <h3>A: Plasma Ghost</h3>
+      <div class="tag">baseline — more glow, smoother blobs</div>
+      <canvas id="spectralA" width="240" height="160"></canvas>
+      <ul>
+        <li>Teal shell with bright edge ring</li>
+        <li>3 plasma blobs orbit inside (smooth)</li>
+        <li>Strong outer glow halo</li>
+        <li>Pulsing plasma-streaked trail</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3>B: Plasma Ghost v2</h3>
+      <div class="tag">fewer blobs, bigger + softer, more glow</div>
+      <canvas id="spectralB" width="240" height="160"></canvas>
+      <ul>
+        <li>2 larger, softer plasma blobs</li>
+        <li>Wider diffuse glow (stronger halo)</li>
+        <li>Thicker shell fill, softer edge</li>
+        <li>Smoother blob motion, gentler trail</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3>C: Plasma Ghost v3</h3>
+      <div class="tag">fast blobs, electric edge sparks</div>
+      <canvas id="spectralC" width="240" height="160"></canvas>
+      <ul>
+        <li>4 small fast plasma blobs</li>
+        <li>Electric sparks on shell edge</li>
+        <li>Brighter center glow</li>
+        <li>Energetic pulsing trail</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3>D: Plasma Ghost v4</h3>
+      <div class="tag">single swirling core, heavy glow</div>
+      <canvas id="spectralD" width="240" height="160"></canvas>
+      <ul>
+        <li>One large plasma mass swirling inside</li>
+        <li>Very strong outer glow</li>
+        <li>Shell barely visible — all glow</li>
+        <li>Warm white-teal dreamy trail</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<div class="section">
+  <h2 style="color:#7c4dff">Laser Ball</h2>
+  <div class="desc">Fires a beam on every hit perpendicular to travel. Purple plasma grenade style.</div>
+  <div class="row">
+    <div class="card current">
+      <h3>Laser</h3>
+      <div class="tag">purple plasma + energy rings</div>
+      <canvas id="laser" width="240" height="160"></canvas>
+      <ul>
+        <li>Purple-white body with bright center</li>
+        <li>Concentric energy rings pulse outward</li>
+        <li>Body throbs with energy</li>
+        <li>Hot ripple ring trail</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<div class="section">
+  <h2 style="color:#cc2244">Bleed Ball</h2>
+  <div class="desc">Stacks bleed on hit. Stacks pop for bonus damage when enemy hit by any ball.</div>
+  <div class="row">
+    <div class="card current">
+      <h3>Bleed</h3>
+      <div class="tag">deep red sphere + dripping trail</div>
+      <canvas id="bleed" width="240" height="160"></canvas>
+      <ul>
+        <li>Deep crimson red sphere</li>
+        <li>Pulsing red border</li>
+        <li>Dripping dot trail</li>
+        <li>Red glow halo</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<div class="section">
+  <h2 style="color:#ff8800">Burn Ball</h2>
+  <div class="desc">Sets enemies on fire — 3s DoT. Flickering flame design.</div>
+  <div class="row">
+    <div class="card current">
+      <h3>Burn</h3>
+      <div class="tag">flickering flame + ember trail</div>
+      <canvas id="burn" width="240" height="160"></canvas>
+      <ul>
+        <li>Flickering orange-yellow body</li>
+        <li>4 flame wisps orbiting</li>
+        <li>Ember square trail</li>
+        <li>Warm glow halo</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<div class="section">
+  <h2 style="color:#44cc44">Poison Ball</h2>
+  <div class="desc">5s poison DoT. Spreads to nearby enemies on kill.</div>
+  <div class="row">
+    <div class="card current">
+      <h3>Poison</h3>
+      <div class="tag">bubbling green + drip trail</div>
+      <canvas id="poison" width="240" height="160"></canvas>
+      <ul>
+        <li>Toxic green sphere with surface bubbles</li>
+        <li>Green drip trail</li>
+        <li>Green glow halo</li>
+        <li>Specular highlight</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<div class="section">
+  <h2 style="color:#44aaff">Lightning Ball</h2>
+  <div class="desc">Chains to 3 nearby enemies on hit. Electric blue style.</div>
+  <div class="row">
+    <div class="card current">
+      <h3>Lightning</h3>
+      <div class="tag">arcing electricity + spark trail</div>
+      <canvas id="lightning" width="240" height="160"></canvas>
+      <ul>
+        <li>Bright white-blue body</li>
+        <li>Small arcs off surface</li>
+        <li>Spark trail</li>
+        <li>Blue-white glow halo</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<div class="section">
+  <h2 style="color:#aaeeff">Freeze Ball</h2>
+  <div class="desc">30% chance to freeze for 2s. Frozen enemies take 1.5x damage.</div>
+  <div class="row">
+    <div class="card current">
+      <h3>Freeze</h3>
+      <div class="tag">crystalline ice + snowflake trail</div>
+      <canvas id="freeze" width="240" height="160"></canvas>
+      <ul>
+        <li>Icy white-cyan body</li>
+        <li>Crystalline star facets</li>
+        <li>Snowflake/crystal trail</li>
+        <li>Cool blue glow</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<div class="section">
+  <h2 style="color:#ffb15f">Explosive Ball</h2>
+  <div class="desc">AoE splash on every hit. Should feel hot, dangerous, volatile.</div>
+  <div class="row">
+    <div class="card">
+      <h3>A: Cannonball</h3>
+      <div class="tag">hot gradient + corona wisps</div>
+      <canvas id="explosiveA" width="240" height="160"></canvas>
+      <ul>
+        <li>Yellow-white to dark red gradient</li>
+        <li>5 flame wisps orbit outside</li>
+        <li>Pulsing radius +/- 6%</li>
+        <li>Ember square trail + double spark</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3>B: Bomb</h3>
+      <div class="tag">dark iron shell, glowing fuse spark</div>
+      <canvas id="explosiveB" width="240" height="160"></canvas>
+      <ul>
+        <li>Dark metallic iron-grey sphere</li>
+        <li>Bright fuse spark on top, spitting sparks</li>
+        <li>Faint orange underglow seeping out</li>
+        <li>Spark shower trail</li>
+      </ul>
+    </div>
+    <div class="card current">
+      <h3>C: Plasma Grenade</h3>
+      <div class="tag">current — pulsing energy charge about to blow</div>
+      <canvas id="explosiveC" width="240" height="160"></canvas>
+      <ul>
+        <li>Orange-red core with bright white center</li>
+        <li>Concentric energy rings pulse outward</li>
+        <li>Body throbs with energy buildup</li>
+        <li>Hot ripple trail</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3>D: Meteor</h3>
+      <div class="tag">burning rock hurtling through space</div>
+      <canvas id="explosiveD" width="240" height="160"></canvas>
+      <ul>
+        <li>Rocky textured orange-brown sphere</li>
+        <li>Bright leading edge from friction</li>
+        <li>Flame wake trailing behind</li>
+        <li>Smoke + ember particle trail</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<script>
+// --- Helpers ---
+function hexToRgb(hex) {
+  const n = parseInt(hex.slice(1), 16);
+  return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
+}
+function rgba(hex, a) {
+  const [r, g, b] = hexToRgb(hex);
+  return `rgba(${r},${g},${b},${a})`;
+}
+function lighten(hex, amt) {
+  const [r, g, b] = hexToRgb(hex);
+  return `rgb(${Math.round(r + (255-r)*amt)},${Math.round(g + (255-g)*amt)},${Math.round(b + (255-b)*amt)})`;
+}
+function darken(hex, amt) {
+  const [r, g, b] = hexToRgb(hex);
+  return `rgb(${Math.round(r*(1-amt))},${Math.round(g*(1-amt))},${Math.round(b*(1-amt))})`;
+}
+
+const NORMAL_R = 6;
+const SPECIAL_R = NORMAL_R * 1.6;
+const TAU = Math.PI * 2;
+// Ball positioned right-of-center so trail extends left
+const BX = 145, BY = 80;
+
+// Trail: positions behind the ball going left-down
+function getTrail(time) {
+  const trail = [];
+  for (let i = 1; i <= 8; i++) {
+    trail.push({
+      x: BX - i * 10 + Math.sin(time * 1.5 + i * 0.7) * 1.2,
+      y: BY + i * 4 + Math.cos(time * 1.3 + i * 0.5) * 1.0
+    });
+  }
+  return trail;
+}
+// Velocity direction (upper-right, matching trail going lower-left)
+const VX = 0.92, VY = -0.39;
+
+// --- Common trail drawers ---
+function drawDotTrail(ctx, trail, color, trailAlpha, br) {
+  for (let i = 0; i < 6; i++) {
+    const t = trail[i]; if (!t) continue;
+    const p = i / 5;
+    const a = (1 - p) * trailAlpha;
+    const r = Math.max(0.5, br * (0.8 - p * 0.5));
+    const g = ctx.createRadialGradient(t.x, t.y, 0, t.x, t.y, r);
+    g.addColorStop(0, rgba(color, a * 0.8));
+    g.addColorStop(1, rgba(color, 0));
+    ctx.fillStyle = g;
+    ctx.beginPath(); ctx.arc(t.x, t.y, r, 0, TAU); ctx.fill();
+  }
+}
+
+function drawEmberTrail(ctx, time, trail, color, trailAlpha, br) {
+  for (let i = 0; i < 6; i++) {
+    const t = trail[i]; if (!t) continue;
+    const p = i / 5;
+    const a = (1 - p) * trailAlpha;
+    const sz = Math.max(0.5, br * (0.6 - p * 0.35));
+    ctx.save();
+    ctx.translate(t.x, t.y);
+    ctx.rotate(time * 6 + i * 1.2);
+    ctx.globalAlpha = a;
+    ctx.fillStyle = color;
+    ctx.fillRect(-sz/2, -sz/2, sz, sz);
+    ctx.restore();
+  }
+}
+
+// --- Drawing functions ---
+const drawFns = {};
+
+// ====== NORMAL ======
+drawFns.normal = function(ctx, time) {
+  const br = NORMAL_R;
+  const trail = getTrail(time);
+  const glow = '#4edcff';
+
+  drawDotTrail(ctx, trail, glow, 0.4, br);
+
+  // Glow
+  const glowR = br * 2.5;
+  const gg = ctx.createRadialGradient(BX, BY, br*0.2, BX, BY, glowR);
+  gg.addColorStop(0, rgba(glow, 0.25));
+  gg.addColorStop(0.5, rgba(glow, 0.08));
+  gg.addColorStop(1, 'rgba(0,0,0,0)');
+  ctx.fillStyle = gg; ctx.beginPath(); ctx.arc(BX, BY, glowR, 0, TAU); ctx.fill();
+
+  // Body
+  const ox = -br*0.35, oy = -br*0.35;
+  const sg = ctx.createRadialGradient(BX+ox, BY+oy, br*0.05, BX, BY, br);
+  sg.addColorStop(0, '#ffffff'); sg.addColorStop(0.3, '#ddeeff');
+  sg.addColorStop(0.7, '#ccddff'); sg.addColorStop(1, darken('#ccddff', 0.4));
+  ctx.fillStyle = sg; ctx.beginPath(); ctx.arc(BX, BY, br, 0, TAU); ctx.fill();
+
+  // Rim
+  ctx.beginPath(); ctx.arc(BX, BY, br, 0, TAU);
+  ctx.strokeStyle = 'rgba(255,255,255,0.25)'; ctx.lineWidth = 0.5; ctx.stroke();
+
+  // Spec
+  const sp = ctx.createRadialGradient(BX+ox*0.5, BY+oy*0.5, 0, BX+ox*0.5, BY+oy*0.5, br*0.35);
+  sp.addColorStop(0, 'rgba(255,255,255,0.9)'); sp.addColorStop(1, 'rgba(255,255,255,0)');
+  ctx.fillStyle = sp; ctx.beginPath(); ctx.arc(BX+ox*0.5, BY+oy*0.5, br*0.35, 0, TAU); ctx.fill();
+};
+
+// === Shared plasma ghost helper ===
+function drawPlasmaGhostBase(ctx, time, opts) {
+  const br = SPECIAL_R;
+  const core = '#4affb7', glow = '#4affb7';
+  const trail = getTrail(time);
+  const blobCount = opts.blobCount || 3;
+  const blobSize = opts.blobSize || 0.28;
+  const blobSpeed = opts.blobSpeed || 2.2;
+  const blobDist = opts.blobDist || 0.42;
+  const glowStrength = opts.glowStrength || 0.3;
+  const shellAlpha = opts.shellAlpha || 0.45;
+  const edgeAlpha = opts.edgeAlpha || 0.5;
+  const trailStyle = opts.trailStyle || 'plasma';
+  const centerGlow = opts.centerGlow || 0.2;
+  const blobSoftness = opts.blobSoftness || 0.3; // where white->core transition starts
+  const edgeSparks = opts.edgeSparks || false;
+
+  // Trail
+  for (let i = 0; i < 6; i++) {
+    const t = trail[i]; if (!t) continue;
+    const p = i / 5;
+    const a = (1 - p) * 0.4;
+    const r = Math.max(1, br * (0.7 - p * 0.35));
+    if (trailStyle === 'plasma') {
+      const throb = Math.sin(time * 6 + i * 1.5) * 0.25 + 0.75;
+      const g = ctx.createRadialGradient(t.x, t.y, 0, t.x, t.y, r * 1.3);
+      g.addColorStop(0, rgba('#ffffff', a * 0.35 * throb));
+      g.addColorStop(0.3, rgba(core, a * 0.5 * throb));
+      g.addColorStop(1, rgba(glow, 0));
+      ctx.fillStyle = g; ctx.beginPath(); ctx.arc(t.x, t.y, r * 1.3, 0, TAU); ctx.fill();
+    } else if (trailStyle === 'soft') {
+      const g = ctx.createRadialGradient(t.x, t.y, 0, t.x, t.y, r * 1.5);
+      g.addColorStop(0, rgba(core, a * 0.35));
+      g.addColorStop(0.5, rgba(glow, a * 0.15));
+      g.addColorStop(1, rgba(glow, 0));
+      ctx.fillStyle = g; ctx.beginPath(); ctx.arc(t.x, t.y, r * 1.5, 0, TAU); ctx.fill();
+    } else if (trailStyle === 'energetic') {
+      const pulse = Math.sin(time * 8 + i * 2.3) * 0.4 + 0.6;
+      const g = ctx.createRadialGradient(t.x, t.y, 0, t.x, t.y, r * 1.1);
+      g.addColorStop(0, rgba('#ffffff', a * 0.4 * pulse));
+      g.addColorStop(0.25, rgba(core, a * 0.6 * pulse));
+      g.addColorStop(1, rgba(glow, 0));
+      ctx.fillStyle = g; ctx.beginPath(); ctx.arc(t.x, t.y, r * 1.1, 0, TAU); ctx.fill();
+    } else if (trailStyle === 'dreamy') {
+      const g = ctx.createRadialGradient(t.x, t.y, 0, t.x, t.y, r * 1.8);
+      g.addColorStop(0, rgba('#ffffff', a * 0.25));
+      g.addColorStop(0.2, rgba(lighten(core, 0.4), a * 0.3));
+      g.addColorStop(0.6, rgba(core, a * 0.12));
+      g.addColorStop(1, rgba(glow, 0));
+      ctx.fillStyle = g; ctx.beginPath(); ctx.arc(t.x, t.y, r * 1.8, 0, TAU); ctx.fill();
+    }
+  }
+
+  // Outer glow halo
+  const edgePulse = 0.5 + Math.sin(time * 3) * 0.5;
+  const glowR = br * (2.8 + glowStrength);
+  const gg = ctx.createRadialGradient(BX, BY, br * 0.2, BX, BY, glowR);
+  gg.addColorStop(0, rgba(glow, glowStrength));
+  gg.addColorStop(0.35, rgba(glow, glowStrength * 0.4));
+  gg.addColorStop(1, 'rgba(0,0,0,0)');
+  ctx.fillStyle = gg; ctx.beginPath(); ctx.arc(BX, BY, glowR, 0, TAU); ctx.fill();
+
+  // Shell
+  ctx.save();
+  ctx.globalAlpha = shellAlpha + edgePulse * 0.1;
+  const shellGrad = ctx.createRadialGradient(BX, BY, br * 0.4, BX, BY, br);
+  shellGrad.addColorStop(0, rgba(core, 0.03));
+  shellGrad.addColorStop(0.6, rgba(core, 0.1));
+  shellGrad.addColorStop(1, rgba(core, 0.3));
+  ctx.fillStyle = shellGrad;
+  ctx.beginPath(); ctx.arc(BX, BY, br, 0, TAU); ctx.fill();
+  // Edge ring
+  ctx.beginPath(); ctx.arc(BX, BY, br, 0, TAU);
+  ctx.strokeStyle = rgba(glow, edgeAlpha + edgePulse * 0.15);
+  ctx.lineWidth = 1.0; ctx.stroke();
+  ctx.restore();
+
+  // Edge sparks
+  if (edgeSparks) {
+    for (let i = 0; i < 5; i++) {
+      const sa = time * 5 + i * TAU / 5;
+      const sparkVisible = Math.sin(time * 10 + i * 3.1) > 0.2;
+      if (!sparkVisible) continue;
+      const sx = BX + Math.cos(sa) * br;
+      const sy = BY + Math.sin(sa) * br;
+      const sg = ctx.createRadialGradient(sx, sy, 0, sx, sy, 2);
+      sg.addColorStop(0, rgba('#ffffff', 0.7));
+      sg.addColorStop(1, rgba(glow, 0));
+      ctx.fillStyle = sg; ctx.beginPath(); ctx.arc(sx, sy, 2, 0, TAU); ctx.fill();
+    }
+  }
+
+  // Plasma blobs orbiting inside
+  for (let i = 0; i < blobCount; i++) {
+    const angle = time * (blobSpeed + i * 0.35) + i * TAU / blobCount;
+    const dist = br * blobDist;
+    const blobX = BX + Math.cos(angle) * dist;
+    const blobY = BY + Math.sin(angle) * dist;
+    const blobR = br * blobSize;
+
+    // Blob smear trail
+    for (let j = 1; j <= 3; j++) {
+      const ta = angle - j * 0.3;
+      const tx = BX + Math.cos(ta) * dist;
+      const ty = BY + Math.sin(ta) * dist;
+      const trailR = blobR * (1 - j * 0.2);
+      const tg = ctx.createRadialGradient(tx, ty, 0, tx, ty, trailR);
+      tg.addColorStop(0, rgba(core, 0.12 * (1 - j * 0.25)));
+      tg.addColorStop(1, rgba(core, 0));
+      ctx.fillStyle = tg;
+      ctx.beginPath(); ctx.arc(tx, ty, trailR, 0, TAU); ctx.fill();
+    }
+
+    // Blob — smooth radial gradient
+    const bg = ctx.createRadialGradient(blobX, blobY, 0, blobX, blobY, blobR);
+    bg.addColorStop(0, rgba('#ffffff', 0.75));
+    bg.addColorStop(blobSoftness, rgba(lighten(core, 0.5), 0.5));
+    bg.addColorStop(0.7, rgba(core, 0.2));
+    bg.addColorStop(1, rgba(core, 0));
+    ctx.fillStyle = bg;
+    ctx.beginPath(); ctx.arc(blobX, blobY, blobR, 0, TAU); ctx.fill();
+  }
+
+  // Center glow
+  const cg = ctx.createRadialGradient(BX, BY, 0, BX, BY, br * 0.6);
+  cg.addColorStop(0, rgba('#ffffff', centerGlow));
+  cg.addColorStop(0.35, rgba(glow, centerGlow * 0.8));
+  cg.addColorStop(1, rgba(glow, 0));
+  ctx.fillStyle = cg; ctx.beginPath(); ctx.arc(BX, BY, br * 0.6, 0, TAU); ctx.fill();
+}
+
+// ====== SPECTRAL A: Plasma Ghost (baseline, smoothed + more glow) ======
+drawFns.spectralA = function(ctx, time) {
+  drawPlasmaGhostBase(ctx, time, {
+    blobCount: 3,
+    blobSize: 0.28,
+    blobSpeed: 2.2,
+    blobDist: 0.4,
+    glowStrength: 0.35,
+    shellAlpha: 0.45,
+    edgeAlpha: 0.5,
+    trailStyle: 'plasma',
+    centerGlow: 0.2,
+    blobSoftness: 0.35,
+  });
+};
+
+// ====== SPECTRAL B: Plasma Ghost v2 — fewer, bigger, softer blobs, more glow ======
+drawFns.spectralB = function(ctx, time) {
+  drawPlasmaGhostBase(ctx, time, {
+    blobCount: 2,
+    blobSize: 0.38,
+    blobSpeed: 1.6,
+    blobDist: 0.35,
+    glowStrength: 0.45,
+    shellAlpha: 0.5,
+    edgeAlpha: 0.4,
+    trailStyle: 'soft',
+    centerGlow: 0.25,
+    blobSoftness: 0.45,
+  });
+};
+
+// ====== SPECTRAL C: Plasma Ghost v3 — fast small blobs, electric edge sparks ======
+drawFns.spectralC = function(ctx, time) {
+  drawPlasmaGhostBase(ctx, time, {
+    blobCount: 4,
+    blobSize: 0.2,
+    blobSpeed: 3.5,
+    blobDist: 0.45,
+    glowStrength: 0.35,
+    shellAlpha: 0.4,
+    edgeAlpha: 0.55,
+    trailStyle: 'energetic',
+    centerGlow: 0.3,
+    blobSoftness: 0.25,
+    edgeSparks: true,
+  });
+};
+
+// ====== SPECTRAL D: Plasma Ghost v4 — single swirling mass, heavy glow ======
+drawFns.spectralD = function(ctx, time) {
+  drawPlasmaGhostBase(ctx, time, {
+    blobCount: 1,
+    blobSize: 0.5,
+    blobSpeed: 1.8,
+    blobDist: 0.2,
+    glowStrength: 0.55,
+    shellAlpha: 0.3,
+    edgeAlpha: 0.3,
+    trailStyle: 'dreamy',
+    centerGlow: 0.35,
+    blobSoftness: 0.5,
+  });
+};
+
+// ====== EXPLOSIVE A (current): Cannonball ======
+drawFns.explosiveA = function(ctx, time) {
+  const baseBr = SPECIAL_R;
+  const pulse = Math.sin(time * 8);
+  const br = baseBr * (1 + pulse * 0.06);
+  const glow = '#ffb15f';
+  const trail = getTrail(time);
+
+  // Ember square trail
+  drawEmberTrail(ctx, time, trail, glow, 0.45, baseBr);
+
+  // Warm glow
+  const glowR = br * 2.8;
+  const gg = ctx.createRadialGradient(BX, BY, br*0.2, BX, BY, glowR);
+  gg.addColorStop(0, rgba('#ffcc44', 0.3)); gg.addColorStop(0.4, rgba(glow, 0.1));
+  gg.addColorStop(1, 'rgba(0,0,0,0)');
+  ctx.fillStyle = gg; ctx.beginPath(); ctx.arc(BX, BY, glowR, 0, TAU); ctx.fill();
+
+  // Corona wisps
+  for (let i = 0; i < 5; i++) {
+    const angle = time*4 + i*TAU/5;
+    const dist = br * 1.3;
+    const wx = BX + Math.cos(angle)*dist, wy = BY + Math.sin(angle)*dist;
+    const wr = br * 0.35;
+    const wg = ctx.createRadialGradient(wx, wy, 0, wx, wy, wr);
+    wg.addColorStop(0, rgba('#ffaa33', 0.5)); wg.addColorStop(1, 'rgba(255,120,0,0)');
+    ctx.fillStyle = wg; ctx.beginPath(); ctx.arc(wx, wy, wr, 0, TAU); ctx.fill();
+  }
+
+  // Body
+  const ox = -br*0.3, oy = -br*0.3;
+  const sg = ctx.createRadialGradient(BX+ox, BY+oy, br*0.05, BX, BY, br);
+  sg.addColorStop(0, '#ffffdd'); sg.addColorStop(0.35, '#ffcc44');
+  sg.addColorStop(0.7, '#ff8822'); sg.addColorStop(1, '#991100');
+  ctx.fillStyle = sg; ctx.beginPath(); ctx.arc(BX, BY, br, 0, TAU); ctx.fill();
+
+  // Inner glow
+  const ig = ctx.createRadialGradient(BX, BY, 0, BX, BY, br*0.7);
+  ig.addColorStop(0, rgba('#ffaa44', 0.3)); ig.addColorStop(1, 'rgba(255,100,0,0)');
+  ctx.fillStyle = ig; ctx.beginPath(); ctx.arc(BX, BY, br*0.7, 0, TAU); ctx.fill();
+
+  // Double spark
+  const sparkOff = 1.6 + Math.sin(time*10)*0.8;
+  ctx.beginPath(); ctx.arc(BX+VX*sparkOff, BY+VY*sparkOff, 1.5, 0, TAU);
+  ctx.fillStyle = '#ffe3a2'; ctx.fill();
+  ctx.beginPath(); ctx.arc(BX-VX*sparkOff*0.8, BY-VY*sparkOff*0.8, 1.2, 0, TAU);
+  ctx.fillStyle = '#ffcc77'; ctx.fill();
+};
+
+// ====== EXPLOSIVE B: Bomb ======
+drawFns.explosiveB = function(ctx, time) {
+  const br = SPECIAL_R;
+  const trail = getTrail(time);
+
+  // Spark shower trail — bright yellow sparks scattering behind
+  for (let i = 0; i < 6; i++) {
+    const t = trail[i]; if (!t) continue;
+    const p = i / 5;
+    // 2-3 tiny sparks per trail position, scattered
+    for (let j = 0; j < 2; j++) {
+      const sparkX = t.x + Math.sin(time * 8 + i * 5.1 + j * 3.7) * 3;
+      const sparkY = t.y + Math.cos(time * 7 + i * 4.3 + j * 2.9) * 3;
+      const a = (1 - p) * 0.6;
+      const r = 0.8 + Math.sin(time * 12 + i + j) * 0.3;
+      ctx.beginPath(); ctx.arc(sparkX, sparkY, r, 0, TAU);
+      ctx.fillStyle = rgba('#ffee66', a);
+      ctx.fill();
+    }
+    // Faint smoke puff
+    const smokeA = (1 - p) * 0.08;
+    ctx.beginPath(); ctx.arc(t.x, t.y - 1, br * (0.4 + p * 0.3), 0, TAU);
+    ctx.fillStyle = rgba('#888888', smokeA);
+    ctx.fill();
+  }
+
+  // Faint orange underglow seeping from shell
+  const underglow = ctx.createRadialGradient(BX, BY, br * 0.7, BX, BY, br * 2.0);
+  underglow.addColorStop(0, rgba('#ff6600', 0.1));
+  underglow.addColorStop(1, 'rgba(0,0,0,0)');
+  ctx.fillStyle = underglow; ctx.beginPath(); ctx.arc(BX, BY, br * 2.0, 0, TAU); ctx.fill();
+
+  // Dark metallic iron-grey body
+  const ox = -br * 0.3, oy = -br * 0.3;
+  const sg = ctx.createRadialGradient(BX + ox, BY + oy, br * 0.05, BX, BY, br);
+  sg.addColorStop(0, '#666677');
+  sg.addColorStop(0.3, '#444455');
+  sg.addColorStop(0.7, '#2a2a33');
+  sg.addColorStop(1, '#151518');
+  ctx.fillStyle = sg; ctx.beginPath(); ctx.arc(BX, BY, br, 0, TAU); ctx.fill();
+
+  // Metallic rim highlight
+  ctx.beginPath(); ctx.arc(BX, BY, br, 0, TAU);
+  ctx.strokeStyle = 'rgba(180,180,200,0.25)'; ctx.lineWidth = 0.6; ctx.stroke();
+
+  // Subtle specular on metal
+  const spec = ctx.createRadialGradient(BX + ox * 0.4, BY + oy * 0.4, 0, BX + ox * 0.4, BY + oy * 0.4, br * 0.25);
+  spec.addColorStop(0, 'rgba(200,200,220,0.4)');
+  spec.addColorStop(1, 'rgba(200,200,220,0)');
+  ctx.fillStyle = spec; ctx.beginPath(); ctx.arc(BX + ox * 0.4, BY + oy * 0.4, br * 0.25, 0, TAU); ctx.fill();
+
+  // Fuse spark on top — bright, spitting
+  const fuseX = BX + Math.sin(time * 0.5) * br * 0.1;
+  const fuseY = BY - br * 0.85;
+  const sparkFlicker = 0.7 + Math.sin(time * 15) * 0.3;
+
+  // Spark glow
+  const sparkGlow = ctx.createRadialGradient(fuseX, fuseY, 0, fuseX, fuseY, br * 0.6);
+  sparkGlow.addColorStop(0, rgba('#ffee44', 0.4 * sparkFlicker));
+  sparkGlow.addColorStop(0.5, rgba('#ff8800', 0.15 * sparkFlicker));
+  sparkGlow.addColorStop(1, 'rgba(0,0,0,0)');
+  ctx.fillStyle = sparkGlow; ctx.beginPath(); ctx.arc(fuseX, fuseY, br * 0.6, 0, TAU); ctx.fill();
+
+  // Spark core
+  const sparkCore = ctx.createRadialGradient(fuseX, fuseY, 0, fuseX, fuseY, 2.5);
+  sparkCore.addColorStop(0, '#ffffff');
+  sparkCore.addColorStop(0.5, '#ffee44');
+  sparkCore.addColorStop(1, rgba('#ff8800', 0));
+  ctx.fillStyle = sparkCore; ctx.beginPath(); ctx.arc(fuseX, fuseY, 2.5, 0, TAU); ctx.fill();
+
+  // Flying sparks from fuse
+  for (let i = 0; i < 4; i++) {
+    const sa = time * 9 + i * TAU / 4;
+    const sd = 2 + Math.sin(time * 11 + i * 3) * 2;
+    const sx = fuseX + Math.cos(sa) * sd;
+    const sy = fuseY + Math.sin(sa) * sd - 1;
+    const sAlpha = (Math.sin(time * 14 + i * 5) * 0.5 + 0.5) * sparkFlicker;
+    ctx.beginPath(); ctx.arc(sx, sy, 0.7, 0, TAU);
+    ctx.fillStyle = rgba('#ffdd44', sAlpha);
+    ctx.fill();
+  }
+};
+
+// ====== EXPLOSIVE C: Plasma Grenade ======
+drawFns.explosiveC = function(ctx, time) {
+  const br = SPECIAL_R;
+  const trail = getTrail(time);
+
+  // Body throbs
+  const throb = Math.sin(time * 6) * 0.05;
+  const drawR = br * (1 + throb);
+
+  // Hot ripple trail — concentric fading rings at trail positions
+  for (let i = 0; i < 5; i++) {
+    const t = trail[i]; if (!t) continue;
+    const p = i / 4;
+    const a = (1 - p) * 0.3;
+    const r = br * (0.5 + p * 0.8);
+    ctx.beginPath(); ctx.arc(t.x, t.y, r, 0, TAU);
+    ctx.strokeStyle = rgba('#ff6633', a);
+    ctx.lineWidth = 1.0 - p * 0.5;
+    ctx.stroke();
+    // Hot center dot
+    const dotR = Math.max(0.5, br * (0.35 - p * 0.2));
+    const dg = ctx.createRadialGradient(t.x, t.y, 0, t.x, t.y, dotR);
+    dg.addColorStop(0, rgba('#ffcc44', a * 0.7));
+    dg.addColorStop(1, rgba('#ff6600', 0));
+    ctx.fillStyle = dg; ctx.beginPath(); ctx.arc(t.x, t.y, dotR, 0, TAU); ctx.fill();
+  }
+
+  // Warm glow halo
+  const glowR = drawR * 3.0;
+  const hg = ctx.createRadialGradient(BX, BY, drawR * 0.3, BX, BY, glowR);
+  hg.addColorStop(0, rgba('#ff8833', 0.25));
+  hg.addColorStop(0.4, rgba('#ff4400', 0.08));
+  hg.addColorStop(1, 'rgba(0,0,0,0)');
+  ctx.fillStyle = hg; ctx.beginPath(); ctx.arc(BX, BY, glowR, 0, TAU); ctx.fill();
+
+  // Concentric energy rings pulsing outward
+  for (let i = 0; i < 3; i++) {
+    const ringPhase = (time * 3 + i * 1.2) % 3.0;
+    const ringProgress = ringPhase / 3.0;
+    const ringR = drawR * (1.0 + ringProgress * 1.5);
+    const ringAlpha = (1 - ringProgress) * 0.35;
+    ctx.beginPath(); ctx.arc(BX, BY, ringR, 0, TAU);
+    ctx.strokeStyle = rgba('#ff7744', ringAlpha);
+    ctx.lineWidth = 1.5 * (1 - ringProgress);
+    ctx.stroke();
+  }
+
+  // Orange-red body with bright white center
+  const sg = ctx.createRadialGradient(BX, BY, 0, BX, BY, drawR);
+  sg.addColorStop(0, '#ffffff');
+  sg.addColorStop(0.2, '#ffee88');
+  sg.addColorStop(0.45, '#ff8833');
+  sg.addColorStop(0.75, '#cc3311');
+  sg.addColorStop(1, '#881100');
+  ctx.fillStyle = sg; ctx.beginPath(); ctx.arc(BX, BY, drawR, 0, TAU); ctx.fill();
+
+  // Inner energy pulse overlay
+  const pulseAlpha = 0.15 + Math.sin(time * 6) * 0.1;
+  const ig = ctx.createRadialGradient(BX, BY, 0, BX, BY, drawR * 0.6);
+  ig.addColorStop(0, rgba('#ffffff', pulseAlpha));
+  ig.addColorStop(1, rgba('#ff6600', 0));
+  ctx.fillStyle = ig; ctx.beginPath(); ctx.arc(BX, BY, drawR * 0.6, 0, TAU); ctx.fill();
+
+  // Rim
+  ctx.beginPath(); ctx.arc(BX, BY, drawR, 0, TAU);
+  ctx.strokeStyle = rgba('#ff4400', 0.3); ctx.lineWidth = 0.7; ctx.stroke();
+};
+
+// ====== EXPLOSIVE D: Meteor ======
+drawFns.explosiveD = function(ctx, time) {
+  const br = SPECIAL_R;
+  const trail = getTrail(time);
+
+  // Flame wake + smoke trail
+  for (let i = 0; i < 6; i++) {
+    const t = trail[i]; if (!t) continue;
+    const p = i / 5;
+
+    // Flame layer (closer = brighter orange, further = darker red)
+    const flameR = br * (1.2 - p * 0.5);
+    const flameA = (1 - p) * 0.5;
+    const fg = ctx.createRadialGradient(t.x, t.y, 0, t.x, t.y, flameR);
+    fg.addColorStop(0, rgba(i < 2 ? '#ffcc44' : '#ff6600', flameA * 0.7));
+    fg.addColorStop(0.5, rgba('#ff3300', flameA * 0.3));
+    fg.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx.fillStyle = fg; ctx.beginPath(); ctx.arc(t.x, t.y, flameR, 0, TAU); ctx.fill();
+
+    // Smoke puffs (further back = more smoke, less fire)
+    if (i > 1) {
+      const smokeR = br * (0.5 + p * 0.6);
+      const smokeA = p * 0.06;
+      ctx.beginPath(); ctx.arc(t.x, t.y - 1, smokeR, 0, TAU);
+      ctx.fillStyle = rgba('#555555', smokeA);
+      ctx.fill();
+    }
+
+    // Ember sparks scattered in wake
+    const sparkX = t.x + Math.sin(time * 7 + i * 4.1) * 4;
+    const sparkY = t.y + Math.cos(time * 6 + i * 3.3) * 3;
+    const sparkA = (1 - p) * 0.5;
+    ctx.beginPath(); ctx.arc(sparkX, sparkY, 0.8, 0, TAU);
+    ctx.fillStyle = rgba('#ffee66', sparkA);
+    ctx.fill();
+  }
+
+  // Friction glow on leading edge
+  const leadGlowX = BX + VX * br * 0.3;
+  const leadGlowY = BY + VY * br * 0.3;
+  const leadG = ctx.createRadialGradient(leadGlowX, leadGlowY, 0, BX, BY, br * 2.5);
+  leadG.addColorStop(0, rgba('#ffee88', 0.3));
+  leadG.addColorStop(0.3, rgba('#ff8833', 0.1));
+  leadG.addColorStop(1, 'rgba(0,0,0,0)');
+  ctx.fillStyle = leadG; ctx.beginPath(); ctx.arc(BX, BY, br * 2.5, 0, TAU); ctx.fill();
+
+  // Rocky textured body — orange-brown sphere
+  const ox = -br * 0.25, oy = -br * 0.25;
+  const sg = ctx.createRadialGradient(BX + ox, BY + oy, br * 0.05, BX, BY, br);
+  sg.addColorStop(0, '#ddaa66');
+  sg.addColorStop(0.3, '#bb7733');
+  sg.addColorStop(0.6, '#884422');
+  sg.addColorStop(1, '#442211');
+  ctx.fillStyle = sg; ctx.beginPath(); ctx.arc(BX, BY, br, 0, TAU); ctx.fill();
+
+  // Rocky texture — darker patches
+  ctx.save();
+  ctx.globalCompositeOperation = 'multiply';
+  ctx.globalAlpha = 0.3;
+  for (let i = 0; i < 6; i++) {
+    const ra = i * TAU / 6 + 0.3;
+    const rd = br * (0.3 + Math.sin(i * 2.7) * 0.2);
+    const rx = BX + Math.cos(ra) * rd;
+    const ry = BY + Math.sin(ra) * rd;
+    const rr = br * 0.25;
+    const rg = ctx.createRadialGradient(rx, ry, 0, rx, ry, rr);
+    rg.addColorStop(0, '#442200');
+    rg.addColorStop(1, 'rgba(68,34,0,0)');
+    ctx.fillStyle = rg; ctx.beginPath(); ctx.arc(rx, ry, rr, 0, TAU); ctx.fill();
+  }
+  ctx.restore();
+
+  // Bright leading edge highlight (atmospheric friction)
+  const leadAngle = Math.atan2(VY, VX);
+  ctx.save();
+  ctx.beginPath();
+  ctx.arc(BX, BY, br, leadAngle - 0.8, leadAngle + 0.8);
+  ctx.strokeStyle = rgba('#ffee88', 0.6);
+  ctx.lineWidth = 1.5;
+  ctx.shadowColor = '#ffcc44';
+  ctx.shadowBlur = 4;
+  ctx.stroke();
+  ctx.restore();
+
+  // Rim
+  ctx.beginPath(); ctx.arc(BX, BY, br, 0, TAU);
+  ctx.strokeStyle = rgba('#aa5522', 0.3); ctx.lineWidth = 0.5; ctx.stroke();
+};
+
+// ====== LASER ======
+drawFns.laser = function(ctx, time) {
+  const br = SPECIAL_R;
+  const trail = getTrail(time);
+  const coreColor = '#b388ff';
+  const glowColor = '#7c4dff';
+  const throb = Math.sin(time * 6) * 0.05;
+  const drawR = br * (1 + throb);
+
+  // Hot ripple trail
+  for (let i = 0; i < 5; i++) {
+    const t = trail[i]; if (!t) continue;
+    const p = i / 4;
+    const a = (1 - p) * 0.3;
+    const r = br * (0.5 + p * 0.8);
+    ctx.beginPath(); ctx.arc(t.x, t.y, r, 0, TAU);
+    ctx.strokeStyle = rgba('#9966ff', a);
+    ctx.lineWidth = 1.0 - p * 0.5;
+    ctx.stroke();
+    const dotR = Math.max(0.5, br * (0.35 - p * 0.2));
+    const dg = ctx.createRadialGradient(t.x, t.y, 0, t.x, t.y, dotR);
+    dg.addColorStop(0, rgba('#ddbbff', a * 0.7));
+    dg.addColorStop(1, rgba(glowColor, 0));
+    ctx.fillStyle = dg; ctx.beginPath(); ctx.arc(t.x, t.y, dotR, 0, TAU); ctx.fill();
+  }
+
+  // Glow
+  const glowR = drawR * 3.0;
+  const hg = ctx.createRadialGradient(BX, BY, drawR * 0.3, BX, BY, glowR);
+  hg.addColorStop(0, rgba(coreColor, 0.25));
+  hg.addColorStop(0.4, rgba(glowColor, 0.08));
+  hg.addColorStop(1, 'rgba(0,0,0,0)');
+  ctx.fillStyle = hg; ctx.beginPath(); ctx.arc(BX, BY, glowR, 0, TAU); ctx.fill();
+
+  // Rings
+  for (let i = 0; i < 3; i++) {
+    const ringPhase = (time * 3 + i * 1.2) % 3.0;
+    const ringProgress = ringPhase / 3.0;
+    const ringR = drawR * (1.0 + ringProgress * 1.5);
+    const ringAlpha = (1 - ringProgress) * 0.35;
+    ctx.beginPath(); ctx.arc(BX, BY, ringR, 0, TAU);
+    ctx.strokeStyle = rgba('#9966ff', ringAlpha);
+    ctx.lineWidth = 1.5 * (1 - ringProgress);
+    ctx.stroke();
+  }
+
+  // Body
+  const sg = ctx.createRadialGradient(BX, BY, 0, BX, BY, drawR);
+  sg.addColorStop(0, '#ffffff');
+  sg.addColorStop(0.2, '#e0ccff');
+  sg.addColorStop(0.45, coreColor);
+  sg.addColorStop(0.75, glowColor);
+  sg.addColorStop(1, '#3311aa');
+  ctx.fillStyle = sg; ctx.beginPath(); ctx.arc(BX, BY, drawR, 0, TAU); ctx.fill();
+
+  // Rim
+  ctx.beginPath(); ctx.arc(BX, BY, drawR, 0, TAU);
+  ctx.strokeStyle = rgba(glowColor, 0.3); ctx.lineWidth = 0.7; ctx.stroke();
+};
+
+// ====== BLEED ======
+drawFns.bleed = function(ctx, time) {
+  const br = SPECIAL_R;
+  const trail = getTrail(time);
+  const core = '#cc2244', glow = '#ff4466';
+
+  // Dripping trail
+  for (let i = 0; i < 6; i++) {
+    const t = trail[i]; if (!t) continue;
+    const p = i / 5;
+    const a = (1 - p) * 0.45;
+    const r = Math.max(0.5, br * (0.7 - p * 0.4));
+    const dripY = t.y + p * 3;
+    const tg = ctx.createRadialGradient(t.x, dripY, 0, t.x, dripY, r);
+    tg.addColorStop(0, rgba(core, a * 0.9));
+    tg.addColorStop(1, rgba(core, 0));
+    ctx.fillStyle = tg;
+    ctx.beginPath(); ctx.arc(t.x, dripY, r, 0, TAU); ctx.fill();
+  }
+
+  // Red glow
+  const glowR = br * 2.5;
+  const gg = ctx.createRadialGradient(BX, BY, br * 0.2, BX, BY, glowR);
+  gg.addColorStop(0, rgba(glow, 0.3));
+  gg.addColorStop(0.5, rgba(glow, 0.08));
+  gg.addColorStop(1, 'rgba(0,0,0,0)');
+  ctx.fillStyle = gg; ctx.beginPath(); ctx.arc(BX, BY, glowR, 0, TAU); ctx.fill();
+
+  // Body
+  const ox = -br * 0.3, oy = -br * 0.3;
+  const sg = ctx.createRadialGradient(BX + ox, BY + oy, br * 0.05, BX, BY, br);
+  sg.addColorStop(0, '#ff6677'); sg.addColorStop(0.3, '#cc2244');
+  sg.addColorStop(0.7, '#881133'); sg.addColorStop(1, '#440011');
+  ctx.fillStyle = sg; ctx.beginPath(); ctx.arc(BX, BY, br, 0, TAU); ctx.fill();
+
+  // Pulsing border
+  const pulse = 0.3 + Math.sin(time * 5) * 0.15;
+  ctx.beginPath(); ctx.arc(BX, BY, br, 0, TAU);
+  ctx.strokeStyle = rgba(glow, pulse); ctx.lineWidth = 1.2; ctx.stroke();
+
+  // Spec
+  const spec = ctx.createRadialGradient(BX + ox * 0.5, BY + oy * 0.5, 0, BX + ox * 0.5, BY + oy * 0.5, br * 0.3);
+  spec.addColorStop(0, 'rgba(255,255,255,0.6)'); spec.addColorStop(1, 'rgba(255,255,255,0)');
+  ctx.fillStyle = spec; ctx.beginPath(); ctx.arc(BX + ox * 0.5, BY + oy * 0.5, br * 0.3, 0, TAU); ctx.fill();
+};
+
+// ====== BURN ======
+drawFns.burn = function(ctx, time) {
+  const br = SPECIAL_R;
+  const trail = getTrail(time);
+  const core = '#ff8800', glow = '#ffcc00';
+
+  // Ember trail
+  for (let i = 0; i < 6; i++) {
+    const t = trail[i]; if (!t) continue;
+    const p = i / 5;
+    const a = (1 - p) * 0.5;
+    const sz = Math.max(0.5, br * (0.6 - p * 0.35));
+    ctx.save(); ctx.translate(t.x, t.y); ctx.rotate(time * 6 + i * 1.2);
+    ctx.globalAlpha = a; ctx.fillStyle = i < 3 ? '#ffcc00' : '#ff6600';
+    ctx.fillRect(-sz / 2, -sz / 2, sz, sz); ctx.restore();
+  }
+
+  // Glow
+  const glowR = br * 2.8;
+  const gg = ctx.createRadialGradient(BX, BY, br * 0.2, BX, BY, glowR);
+  gg.addColorStop(0, rgba(glow, 0.3)); gg.addColorStop(0.4, rgba(core, 0.1));
+  gg.addColorStop(1, 'rgba(0,0,0,0)');
+  ctx.fillStyle = gg; ctx.beginPath(); ctx.arc(BX, BY, glowR, 0, TAU); ctx.fill();
+
+  // Flame wisps
+  for (let i = 0; i < 4; i++) {
+    const angle = time * 4.5 + i * TAU / 4;
+    const dist = br * 1.2;
+    const wx = BX + Math.cos(angle) * dist, wy = BY + Math.sin(angle) * dist;
+    const wr = br * 0.3;
+    const wg = ctx.createRadialGradient(wx, wy, 0, wx, wy, wr);
+    wg.addColorStop(0, rgba('#ffcc00', 0.5)); wg.addColorStop(1, rgba('#ff6600', 0));
+    ctx.fillStyle = wg; ctx.beginPath(); ctx.arc(wx, wy, wr, 0, TAU); ctx.fill();
+  }
+
+  // Flickering body
+  const flicker = 1 + Math.sin(time * 12) * 0.04;
+  const drawR = br * flicker;
+  const sg = ctx.createRadialGradient(BX, BY, 0, BX, BY, drawR);
+  sg.addColorStop(0, '#ffffcc'); sg.addColorStop(0.25, '#ffcc00');
+  sg.addColorStop(0.6, '#ff8800'); sg.addColorStop(1, '#cc3300');
+  ctx.fillStyle = sg; ctx.beginPath(); ctx.arc(BX, BY, drawR, 0, TAU); ctx.fill();
+
+  ctx.beginPath(); ctx.arc(BX, BY, drawR, 0, TAU);
+  ctx.strokeStyle = rgba('#ff6600', 0.3); ctx.lineWidth = 0.6; ctx.stroke();
+};
+
+// ====== POISON ======
+drawFns.poison = function(ctx, time) {
+  const br = SPECIAL_R;
+  const trail = getTrail(time);
+  const core = '#44cc44', glow = '#88ff88';
+
+  // Drip trail
+  for (let i = 0; i < 6; i++) {
+    const t = trail[i]; if (!t) continue;
+    const p = i / 5;
+    const a = (1 - p) * 0.4;
+    const r = Math.max(0.5, br * (0.6 - p * 0.35));
+    const dripY = t.y + p * 2.5;
+    const tg = ctx.createRadialGradient(t.x, dripY, 0, t.x, dripY, r);
+    tg.addColorStop(0, rgba(core, a * 0.8)); tg.addColorStop(1, rgba(core, 0));
+    ctx.fillStyle = tg; ctx.beginPath(); ctx.arc(t.x, dripY, r, 0, TAU); ctx.fill();
+  }
+
+  // Glow
+  const glowR = br * 2.5;
+  const gg = ctx.createRadialGradient(BX, BY, br * 0.2, BX, BY, glowR);
+  gg.addColorStop(0, rgba(glow, 0.25)); gg.addColorStop(0.5, rgba(glow, 0.06));
+  gg.addColorStop(1, 'rgba(0,0,0,0)');
+  ctx.fillStyle = gg; ctx.beginPath(); ctx.arc(BX, BY, glowR, 0, TAU); ctx.fill();
+
+  // Body
+  const ox = -br * 0.3, oy = -br * 0.3;
+  const sg = ctx.createRadialGradient(BX + ox, BY + oy, br * 0.05, BX, BY, br);
+  sg.addColorStop(0, '#88ff88'); sg.addColorStop(0.3, '#44cc44');
+  sg.addColorStop(0.7, '#228822'); sg.addColorStop(1, '#114411');
+  ctx.fillStyle = sg; ctx.beginPath(); ctx.arc(BX, BY, br, 0, TAU); ctx.fill();
+
+  // Surface bubbles
+  for (let i = 0; i < 3; i++) {
+    const ba = time * 2.5 + i * TAU / 3;
+    const bd = br * 0.45;
+    const bbx = BX + Math.cos(ba) * bd, bby = BY + Math.sin(ba) * bd;
+    const bbr = br * 0.15 + Math.sin(time * 4 + i * 2) * br * 0.05;
+    ctx.beginPath(); ctx.arc(bbx, bby, bbr, 0, TAU);
+    ctx.fillStyle = rgba('#ccffcc', 0.4); ctx.fill();
+  }
+
+  // Rim + spec
+  ctx.beginPath(); ctx.arc(BX, BY, br, 0, TAU);
+  ctx.strokeStyle = rgba(glow, 0.3); ctx.lineWidth = 0.6; ctx.stroke();
+  const spec = ctx.createRadialGradient(BX + ox * 0.5, BY + oy * 0.5, 0, BX + ox * 0.5, BY + oy * 0.5, br * 0.3);
+  spec.addColorStop(0, 'rgba(255,255,255,0.5)'); spec.addColorStop(1, 'rgba(255,255,255,0)');
+  ctx.fillStyle = spec; ctx.beginPath(); ctx.arc(BX + ox * 0.5, BY + oy * 0.5, br * 0.3, 0, TAU); ctx.fill();
+};
+
+// ====== LIGHTNING ======
+drawFns.lightning = function(ctx, time) {
+  const br = SPECIAL_R;
+  const trail = getTrail(time);
+  const core = '#44aaff', glow = '#88ddff';
+
+  // Spark trail
+  for (let i = 0; i < 6; i++) {
+    const t = trail[i]; if (!t) continue;
+    const p = i / 5;
+    const a = (1 - p) * 0.5;
+    const sx = t.x + Math.sin(time * 10 + i * 3.7) * 2;
+    const sy = t.y + Math.cos(time * 9 + i * 2.9) * 2;
+    ctx.beginPath(); ctx.arc(sx, sy, 1.0, 0, TAU);
+    ctx.fillStyle = rgba('#ffffff', a * 0.7); ctx.fill();
+    const tg = ctx.createRadialGradient(t.x, t.y, 0, t.x, t.y, br * (0.5 - p * 0.3));
+    tg.addColorStop(0, rgba(glow, a * 0.4)); tg.addColorStop(1, rgba(glow, 0));
+    ctx.fillStyle = tg; ctx.beginPath(); ctx.arc(t.x, t.y, br * (0.5 - p * 0.3), 0, TAU); ctx.fill();
+  }
+
+  // Glow
+  const glowR = br * 2.8;
+  const gg = ctx.createRadialGradient(BX, BY, br * 0.2, BX, BY, glowR);
+  gg.addColorStop(0, rgba('#ffffff', 0.2)); gg.addColorStop(0.3, rgba(glow, 0.15));
+  gg.addColorStop(1, 'rgba(0,0,0,0)');
+  ctx.fillStyle = gg; ctx.beginPath(); ctx.arc(BX, BY, glowR, 0, TAU); ctx.fill();
+
+  // Body
+  const sg = ctx.createRadialGradient(BX, BY, 0, BX, BY, br);
+  sg.addColorStop(0, '#ffffff'); sg.addColorStop(0.3, '#ccecff');
+  sg.addColorStop(0.6, core); sg.addColorStop(1, darken(core, 0.4));
+  ctx.fillStyle = sg; ctx.beginPath(); ctx.arc(BX, BY, br, 0, TAU); ctx.fill();
+
+  // Surface arcs
+  for (let i = 0; i < 4; i++) {
+    const arcVisible = Math.sin(time * 12 + i * 4.1) > 0.3;
+    if (!arcVisible) continue;
+    const a1 = time * 6 + i * TAU / 4;
+    ctx.beginPath(); ctx.arc(BX, BY, br * 1.15, a1, a1 + 0.6);
+    ctx.strokeStyle = rgba('#ffffff', 0.5); ctx.lineWidth = 0.8; ctx.stroke();
+  }
+
+  ctx.beginPath(); ctx.arc(BX, BY, br, 0, TAU);
+  ctx.strokeStyle = rgba(glow, 0.3); ctx.lineWidth = 0.5; ctx.stroke();
+};
+
+// ====== FREEZE ======
+drawFns.freeze = function(ctx, time) {
+  const br = SPECIAL_R;
+  const trail = getTrail(time);
+  const core = '#aaeeff', glow = '#ddf4ff';
+
+  // Crystal trail
+  for (let i = 0; i < 6; i++) {
+    const t = trail[i]; if (!t) continue;
+    const p = i / 5;
+    const a = (1 - p) * 0.4;
+    const r = Math.max(0.5, br * (0.5 - p * 0.3));
+    const tg = ctx.createRadialGradient(t.x, t.y, 0, t.x, t.y, r * 1.3);
+    tg.addColorStop(0, rgba('#ffffff', a * 0.5));
+    tg.addColorStop(0.4, rgba(core, a * 0.3));
+    tg.addColorStop(1, rgba(core, 0));
+    ctx.fillStyle = tg; ctx.beginPath(); ctx.arc(t.x, t.y, r * 1.3, 0, TAU); ctx.fill();
+  }
+
+  // Glow
+  const glowR = br * 2.5;
+  const gg = ctx.createRadialGradient(BX, BY, br * 0.2, BX, BY, glowR);
+  gg.addColorStop(0, rgba(glow, 0.2)); gg.addColorStop(0.5, rgba(core, 0.06));
+  gg.addColorStop(1, 'rgba(0,0,0,0)');
+  ctx.fillStyle = gg; ctx.beginPath(); ctx.arc(BX, BY, glowR, 0, TAU); ctx.fill();
+
+  // Body
+  const ox = -br * 0.3, oy = -br * 0.3;
+  const sg = ctx.createRadialGradient(BX + ox, BY + oy, br * 0.05, BX, BY, br);
+  sg.addColorStop(0, '#ffffff'); sg.addColorStop(0.3, '#ddf4ff');
+  sg.addColorStop(0.6, '#aaeeff'); sg.addColorStop(1, '#5599cc');
+  ctx.fillStyle = sg; ctx.beginPath(); ctx.arc(BX, BY, br, 0, TAU); ctx.fill();
+
+  // Crystal facets
+  ctx.save(); ctx.translate(BX, BY); ctx.rotate(time * 0.4);
+  for (let i = 0; i < 6; i++) {
+    const angle = i * TAU / 6;
+    const len = br * 0.6;
+    ctx.beginPath(); ctx.moveTo(0, 0);
+    ctx.lineTo(Math.cos(angle) * len, Math.sin(angle) * len);
+    ctx.strokeStyle = rgba('#ffffff', 0.2); ctx.lineWidth = 0.5; ctx.stroke();
+  }
+  ctx.restore();
+
+  // Rim + spec
+  ctx.beginPath(); ctx.arc(BX, BY, br, 0, TAU);
+  ctx.strokeStyle = rgba('#ffffff', 0.3); ctx.lineWidth = 0.5; ctx.stroke();
+  const spec = ctx.createRadialGradient(BX + ox * 0.5, BY + oy * 0.5, 0, BX + ox * 0.5, BY + oy * 0.5, br * 0.35);
+  spec.addColorStop(0, 'rgba(255,255,255,0.8)'); spec.addColorStop(1, 'rgba(255,255,255,0)');
+  ctx.fillStyle = spec; ctx.beginPath(); ctx.arc(BX + ox * 0.5, BY + oy * 0.5, br * 0.35, 0, TAU); ctx.fill();
+};
+
+// --- Animation loop ---
+const canvases = {};
+const contexts = {};
+const W = 240, H = 160;
+const ids = ['normal', 'spectralA', 'spectralB', 'spectralC', 'spectralD',
+             'laser', 'bleed', 'burn', 'poison', 'lightning', 'freeze',
+             'explosiveA', 'explosiveB', 'explosiveC', 'explosiveD'];
+
+for (const id of ids) {
+  const c = document.getElementById(id);
+  if (c) {
+    canvases[id] = c;
+    contexts[id] = c.getContext('2d');
+    const dpr = window.devicePixelRatio || 1;
+    c.width = W * dpr;
+    c.height = H * dpr;
+    c.style.width = W + 'px';
+    c.style.height = H + 'px';
+    contexts[id].scale(dpr, dpr);
+  }
+}
+
+function frame() {
+  const time = performance.now() / 1000;
+  for (const id of ids) {
+    const ctx = contexts[id];
+    if (!ctx) continue;
+    ctx.clearRect(0, 0, W, H);
+    drawFns[id](ctx, time);
+  }
+  requestAnimationFrame(frame);
+}
+frame();
+</script>
+</body>
+</html>
