@@ -1267,69 +1267,79 @@ function drawDamageNumber(dn: DamageNumber): void {
 }
 
 // Smoothed startX so the row doesn't jump when slot count changes
-let slotRowX = -1;
-
-function drawBallSlots(game: Game, time: number): void {
+function drawBallQueue(game: Game, time: number): void {
   const queue = game.ballQueue;
   const returning = game.returningBalls;
   const inFlight = game.balls.filter(b => b.active);
   const totalSlots = queue.length + returning.length + inFlight.length;
   if (totalSlots === 0) return;
 
-  const spacing = 18;
-  const totalW = (totalSlots - 1) * spacing;
-  const targetX = WORLD_W / 2 - totalW / 2;
-  // Smooth the row position so it doesn't snap on fire
-  if (slotRowX < 0) slotRowX = targetX;
-  else slotRowX += (targetX - slotRowX) * 0.25;
-  const startX = slotRowX;
-  const y = BALL_SPAWN_Y - 18;
+  const colX = WORLD_W - 20;
+  const bottomY = BALL_SPAWN_Y - 25;
+  const spacing = 22;
   const maxCooldown = game.stats.recycleCooldown;
 
-  // "Next" ball scale-up transition
-  const fireDuration = 0.15;
-  const fireAge = time - game.lastFireTime;
-  const promoteT = fireAge < fireDuration ? fireAge / fireDuration : 1;
-  const promoteEase = promoteT * (2 - promoteT);
-
+  // Build slot list bottom-to-top: queue[0] at bottom, then rest, returning, in-flight
   type SlotDraw =
     | { kind: 'inflight'; type: BallType }
     | { kind: 'returning'; type: BallType; cooldown: number }
     | { kind: 'ready'; type: BallType; isNext: boolean };
 
-  const slots: SlotDraw[] = new Array(totalSlots);
-  let ri = totalSlots - 1;
+  const slots: SlotDraw[] = [];
 
+  // Queue balls (index 0 = next to fire = bottom)
   for (let i = 0; i < queue.length; i++) {
-    slots[ri--] = { kind: 'ready', type: queue[i], isNext: i === 0 };
+    slots.push({ kind: 'ready', type: queue[i], isNext: i === 0 });
   }
 
+  // Returning balls sorted by cooldown ascending (closest to ready = closest to bottom)
   const sortedReturning = [...returning].sort((a, b) => a.cooldown - b.cooldown);
   for (const rb of sortedReturning) {
-    slots[ri--] = { kind: 'returning', type: rb.type, cooldown: rb.cooldown };
+    slots.push({ kind: 'returning', type: rb.type, cooldown: rb.cooldown });
   }
 
+  // In-flight balls (top, dimmest)
   for (const b of inFlight) {
-    slots[ri--] = { kind: 'inflight', type: b.type };
+    slots.push({ kind: 'inflight', type: b.type });
   }
 
+  // Glass track backing
+  const trackW = 24;
+  const trackH = (totalSlots - 1) * spacing + 28;
+  const trackX = colX - trackW / 2;
+  const trackY = bottomY - (totalSlots - 1) * spacing - 14;
+  const trackGrad = ctx.createLinearGradient(trackX, trackY, trackX + trackW, trackY);
+  trackGrad.addColorStop(0, 'rgba(20,20,50,0.3)');
+  trackGrad.addColorStop(0.5, 'rgba(30,30,70,0.25)');
+  trackGrad.addColorStop(1, 'rgba(20,20,50,0.3)');
+  roundRect(trackX, trackY, trackW, trackH, 12);
+  ctx.fillStyle = trackGrad;
+  ctx.fill();
+  roundRect(trackX, trackY, trackW, trackH, 12);
+  ctx.strokeStyle = 'rgba(255,255,255,0.06)';
+  ctx.lineWidth = 0.5;
+  ctx.stroke();
+
+  // Draw each slot bottom-to-top
   for (let i = 0; i < slots.length; i++) {
     const s = slots[i];
     const ballStyle = activeTheme.ball[s.type];
     const color = ballStyle.core;
     const colorForGrad = color === '#ffffff' ? '#aaccff' : color;
-    const cx = startX + i * spacing;
+    const cy = bottomY - i * spacing;
 
     if (s.kind === 'inflight') {
+      // Empty dim ring
       ctx.beginPath();
-      ctx.arc(cx, y, 5, 0, Math.PI * 2);
+      ctx.arc(colX, cy, 5, 0, Math.PI * 2);
       ctx.strokeStyle = 'rgba(255,255,255,0.15)';
       ctx.lineWidth = 1.5;
       ctx.stroke();
     } else if (s.kind === 'returning') {
+      // Dim base circle + clockwise cooldown arc fill
       const r = 5;
       ctx.beginPath();
-      ctx.arc(cx, y, r, 0, Math.PI * 2);
+      ctx.arc(colX, cy, r, 0, Math.PI * 2);
       ctx.fillStyle = 'rgba(255,255,255,0.08)';
       ctx.fill();
 
@@ -1337,43 +1347,43 @@ function drawBallSlots(game: Game, time: number): void {
       const arcStart = -Math.PI / 2;
       const arcEnd = arcStart + Math.PI * 2 * progress;
       ctx.beginPath();
-      ctx.moveTo(cx, y);
-      ctx.arc(cx, y, r, arcStart, arcEnd);
+      ctx.moveTo(colX, cy);
+      ctx.arc(colX, cy, r, arcStart, arcEnd);
       ctx.closePath();
       ctx.fillStyle = rgba(colorForGrad, 0.45);
       ctx.fill();
     } else {
       const isNext = s.isNext;
-      // New "next" ball grows from 5→7; others stay at 5
-      const r = isNext ? 5 + 2 * promoteEase : 5;
-      const blur = isNext ? 3 + 7 * promoteEase : 3;
-      const bob = isNext ? Math.sin(time * 5) * 2.5 * promoteEase : 0;
-      const dy = y - bob;
+      const r = isNext ? 8 : 6;
+      const bob = isNext ? Math.sin(time * 5) * 2 : 0;
+      const dy = cy - bob;
 
       ctx.save();
       ctx.shadowColor = ballStyle.glow;
-      ctx.shadowBlur = blur;
+      ctx.shadowBlur = isNext ? 10 : 3;
 
-      const grad = ctx.createRadialGradient(cx - 1, dy - 1, 0, cx, dy, r);
+      const grad = ctx.createRadialGradient(colX - 1, dy - 1, 0, colX, dy, r);
       grad.addColorStop(0, '#ffffff');
       grad.addColorStop(0.45, color);
       grad.addColorStop(1, darken(colorForGrad, 0.35));
       ctx.beginPath();
-      ctx.arc(cx, dy, r, 0, Math.PI * 2);
+      ctx.arc(colX, dy, r, 0, Math.PI * 2);
       ctx.fillStyle = grad;
       ctx.fill();
       ctx.restore();
 
       if (isNext) {
-        const ringAlpha = (0.5 + Math.sin(time * 4) * 0.2) * promoteEase;
+        // Pulsing glow ring
+        const ringAlpha = 0.5 + Math.sin(time * 4) * 0.2;
         ctx.beginPath();
-        ctx.arc(cx, dy, r + 2.5, 0, Math.PI * 2);
+        ctx.arc(colX, dy, r + 2.5, 0, Math.PI * 2);
         ctx.strokeStyle = rgba(ballStyle.glow, ringAlpha);
         ctx.lineWidth = 1.2;
         ctx.stroke();
       } else {
+        // Dark overlay for non-next ready balls
         ctx.beginPath();
-        ctx.arc(cx, dy, r, 0, Math.PI * 2);
+        ctx.arc(colX, dy, r, 0, Math.PI * 2);
         ctx.fillStyle = 'rgba(0,0,0,0.25)';
         ctx.fill();
       }
@@ -1383,149 +1393,88 @@ function drawBallSlots(game: Game, time: number): void {
 
 
 
-function drawSwipeIndicator(game: Game): void {
+function drawAimIndicator(game: Game): void {
   if (game.state !== 'PLAYING') return;
-  if (!game.input.swiping || !game.input.swipeStart || !game.input.swipeCurrent) return;
 
-  const start = game.input.swipeStart;
-  const current = game.input.swipeCurrent;
-  const sdx = current.x - start.x;
-  const sdy = current.y - start.y;
-  const sDist = Math.sqrt(sdx * sdx + sdy * sdy);
-  if (sDist < 5) return;
-
-  // Normalize direction, clamp upward
-  let dx = sdx / sDist;
-  let dy = sdy / sDist;
-  if (dy > -0.1) {
-    dy = -0.1;
-    const len = Math.hypot(dx, dy);
-    dx /= len;
-    dy /= len;
-  }
-
-  const leftWall = GRID_LEFT;
+  let dx: number, dy: number, ox: number;
+  const isSwiping = game.input.swiping && game.input.swipeStart && game.input.swipeCurrent;
   const rightWall = GRID_LEFT + GRID_COLS * CELL_SIZE;
-  const spawnX = clamp(start.x, leftWall + 1, rightWall - 1);
-  const spawnY = BALL_SPAWN_Y;
 
-  // Trace ray with wall bounces
-  const points: { x: number; y: number }[] = [{ x: spawnX, y: spawnY }];
-  let rx = spawnX;
-  let ry = spawnY;
-  let rdx = dx;
-  let rdy = dy;
-  const maxBounces = 3;
-  const rayLen = 800;
-
-  for (let seg = 0; seg < maxBounces; seg++) {
-    // Find nearest wall or top intersection
-    let tBest = rayLen;
-    let bounced = false;
-
-    // Left wall
-    if (rdx < 0) {
-      const t = (leftWall - rx) / rdx;
-      if (t > 0.5 && t < tBest) { tBest = t; bounced = true; }
-    }
-    // Right wall
-    if (rdx > 0) {
-      const t = (rightWall - rx) / rdx;
-      if (t > 0.5 && t < tBest) { tBest = t; bounced = true; }
-    }
-    // Top
-    if (rdy < 0) {
-      const t = -ry / rdy;
-      if (t > 0.5 && t < tBest) { tBest = t; bounced = false; }
-    }
-
-    // Check enemy intersections
-    let hitEnemy = false;
-    for (const e of game.enemies) {
-      if (!e.alive) continue;
-      const ex1 = e.pos.x;
-      const ey1 = e.pos.y;
-      const ex2 = ex1 + e.width;
-      const ey2 = ey1 + e.height;
-
-      let tNear = -Infinity;
-      let tFar = Infinity;
-
-      if (rdx !== 0) {
-        let t1 = (ex1 - rx) / rdx;
-        let t2 = (ex2 - rx) / rdx;
-        if (t1 > t2) { const tmp = t1; t1 = t2; t2 = tmp; }
-        tNear = Math.max(tNear, t1);
-        tFar = Math.min(tFar, t2);
-      } else if (rx < ex1 || rx > ex2) continue;
-
-      if (rdy !== 0) {
-        let t1 = (ey1 - ry) / rdy;
-        let t2 = (ey2 - ry) / rdy;
-        if (t1 > t2) { const tmp = t1; t1 = t2; t2 = tmp; }
-        tNear = Math.max(tNear, t1);
-        tFar = Math.min(tFar, t2);
-      } else if (ry < ey1 || ry > ey2) continue;
-
-      if (tNear <= tFar && tFar > 0.5) {
-        const tHit = tNear > 0.5 ? tNear : tFar;
-        if (tHit < tBest) {
-          tBest = tHit;
-          bounced = false;
-          hitEnemy = true;
-        }
-      }
-    }
-
-    const nx = rx + rdx * tBest;
-    const ny = ry + rdy * tBest;
-    points.push({ x: nx, y: ny });
-
-    if (hitEnemy || !bounced) break;
-
-    // Reflect off wall (horizontal bounce)
-    rdx = -rdx;
-    rx = nx;
-    ry = ny;
+  if (isSwiping) {
+    const start = game.input.swipeStart!;
+    const cur = game.input.swipeCurrent!;
+    const sdx = cur.x - start.x;
+    const sdy = cur.y - start.y;
+    const sDist = Math.sqrt(sdx * sdx + sdy * sdy);
+    if (sDist < 5) return;
+    dx = sdx / sDist;
+    dy = sdy / sDist;
+    if (dy > -0.1) { dy = -0.1; const len = Math.hypot(dx, dy); dx /= len; dy /= len; }
+    ox = clamp(start.x, GRID_LEFT + 1, rightWall - 1);
+  } else if (game.aimDir) {
+    dx = game.aimDir.dirX;
+    dy = game.aimDir.dirY;
+    ox = clamp(game.aimDir.originX, GRID_LEFT + 1, rightWall - 1);
+  } else {
+    return;
   }
 
-  // Draw: dashed line with glow per segment
+  const oy = BALL_SPAWN_Y;
+  const col = activeTheme.colors.aimLine;
+  const [cr, cg, cb] = hexToRgb(col);
+  const active = isSwiping ? 1.0 : 0.6;
+  const t = performance.now() / 1000;
+
   ctx.save();
-  ctx.setLineDash([6, 5]);
-  ctx.lineCap = 'round';
 
-  for (let i = 0; i < points.length - 1; i++) {
-    const from = points[i];
-    const to = points[i + 1];
-    const alpha = 0.5 - i * 0.15;
-
-    // Glow
-    ctx.strokeStyle = rgba(activeTheme.colors.aimLine, alpha * 0.3);
-    ctx.lineWidth = 4;
-    ctx.beginPath();
-    ctx.moveTo(from.x, from.y);
-    ctx.lineTo(to.x, to.y);
-    ctx.stroke();
-
-    // Core
-    ctx.strokeStyle = rgba(activeTheme.colors.aimLine, alpha);
-    ctx.lineWidth = 1.5;
-    ctx.beginPath();
-    ctx.moveTo(from.x, from.y);
-    ctx.lineTo(to.x, to.y);
-    ctx.stroke();
-  }
-  ctx.setLineDash([]);
-
-  // Tip dot
-  const tip = points[points.length - 1];
-  const tipGrad = ctx.createRadialGradient(tip.x, tip.y, 0, tip.x, tip.y, 5);
-  tipGrad.addColorStop(0, rgba(activeTheme.colors.aimLine, 0.5));
-  tipGrad.addColorStop(1, 'rgba(0,0,0,0)');
-  ctx.fillStyle = tipGrad;
+  // === Glowing origin circle ===
+  const pulseR = 5 + Math.sin(t * 3) * 1;
+  const originGlow = ctx.createRadialGradient(ox, oy, 1, ox, oy, pulseR + 6);
+  originGlow.addColorStop(0, rgbaFromRgb(cr, cg, cb, 0.4 * active));
+  originGlow.addColorStop(1, rgbaFromRgb(cr, cg, cb, 0));
   ctx.beginPath();
-  ctx.arc(tip.x, tip.y, 5, 0, Math.PI * 2);
+  ctx.arc(ox, oy, pulseR + 6, 0, Math.PI * 2);
+  ctx.fillStyle = originGlow;
   ctx.fill();
+
+  ctx.beginPath();
+  ctx.arc(ox, oy, 3, 0, Math.PI * 2);
+  ctx.fillStyle = rgbaFromRgb(cr, cg, cb, 0.7 * active);
+  ctx.fill();
+
+  // === Dotted trajectory line with gradient fade ===
+  const lineLen = 80;
+  const dots = 10;
+  for (let i = 0; i < dots; i++) {
+    const frac = (i + 1) / dots;
+    const px = ox + dx * lineLen * frac;
+    const py = oy + dy * lineLen * frac;
+    const dotAlpha = (1 - frac * 0.7) * 0.6 * active;
+    const dotR = 1.8 - frac * 0.8;
+
+    ctx.beginPath();
+    ctx.arc(px, py, dotR, 0, Math.PI * 2);
+    ctx.fillStyle = rgbaFromRgb(cr, cg, cb, dotAlpha);
+    ctx.fill();
+  }
+
+  // === Arrow tip ===
+  const tipX = ox + dx * lineLen;
+  const tipY = oy + dy * lineLen;
+  const angle = Math.atan2(dy, dx);
+  const arrowSize = 7;
+
+  // Arrow glow
+  ctx.shadowColor = col;
+  ctx.shadowBlur = 8 * active;
+  ctx.fillStyle = rgbaFromRgb(cr, cg, cb, 0.8 * active);
+  ctx.beginPath();
+  ctx.moveTo(tipX + Math.cos(angle) * 2, tipY + Math.sin(angle) * 2);
+  ctx.lineTo(tipX + Math.cos(angle + Math.PI * 0.75) * arrowSize, tipY + Math.sin(angle + Math.PI * 0.75) * arrowSize);
+  ctx.lineTo(tipX + Math.cos(angle - Math.PI * 0.75) * arrowSize, tipY + Math.sin(angle - Math.PI * 0.75) * arrowSize);
+  ctx.closePath();
+  ctx.fill();
+  ctx.shadowBlur = 0;
 
   ctx.restore();
 }
@@ -1555,44 +1504,18 @@ function drawGlassPanel(x: number, y: number, w: number, h: number, r: number): 
 }
 
 function drawHUD(game: Game): void {
-  const padX = 12;
-  const padY = 10;
+  // Row sits below XP bar (4px) + 6px gap = Y:10, 28px tall → ends at Y:38
+  const rowY = 10;
+  const rowH = 28;
 
-  // ── Score — top center, prominent ──
-  const scoreText = `${game.score}`;
-  ctx.font = `800 20px ${activeTheme.fonts.numeric}`;
-  const scoreMetrics = ctx.measureText(scoreText);
-  const scorePanelW = Math.max(76, scoreMetrics.width + 32);
-  const scorePanelH = 38;
-  const scorePanelX = (WORLD_W - scorePanelW) / 2;
-  const scorePanelY = padY;
+  // ── HP — top left ──
+  const hpPanelW = 100;
+  const hpPanelX = 8;
 
-  drawGlassPanel(scorePanelX, scorePanelY, scorePanelW, scorePanelH, 10);
+  drawGlassPanel(hpPanelX, rowY, hpPanelW, rowH, 8);
 
-  // Score label
-  ctx.font = `700 8px ${activeTheme.fonts.ui}`;
-  ctx.textAlign = 'center';
-  ctx.textBaseline = 'top';
-  ctx.fillStyle = 'rgba(255,255,255,0.35)';
-  ctx.fillText('SCORE', WORLD_W / 2, scorePanelY + 5);
-
-  // Score value
-  ctx.font = `800 18px ${activeTheme.fonts.numeric}`;
-  ctx.textBaseline = 'bottom';
-  ctx.fillStyle = activeTheme.colors.hudText;
-  ctx.fillText(scoreText, WORLD_W / 2, scorePanelY + scorePanelH - 5);
-
-  // ── HP bar — bottom left, wider with heart icon ──
-  const hpPanelW = 130;
-  const hpPanelH = 26;
-  const hpPanelX = padX;
-  const hpPanelY = WORLD_H - 50;
-
-  drawGlassPanel(hpPanelX, hpPanelY, hpPanelW, hpPanelH, 7);
-
-  // Heart icon
-  const heartX = hpPanelX + 14;
-  const heartY = hpPanelY + hpPanelH / 2;
+  const heartX = hpPanelX + 13;
+  const heartY = rowY + rowH / 2;
   const isLow = game.playerHp / PLAYER_MAX_HP <= 0.4;
   ctx.save();
   ctx.fillStyle = isLow ? '#f47070' : '#ff6b8a';
@@ -1602,28 +1525,25 @@ function drawHUD(game: Game): void {
   ctx.fillText('\u2665', heartX, heartY + 0.5);
   ctx.restore();
 
-  // HP count text
   ctx.font = `800 11px ${activeTheme.fonts.numeric}`;
   ctx.textAlign = 'left';
   ctx.textBaseline = 'middle';
   ctx.fillStyle = activeTheme.colors.hudText;
   ctx.fillText(`${game.playerHp}`, hpPanelX + 24, heartY + 0.5);
 
-  // HP bar
-  const barX = hpPanelX + 42;
-  const barW = hpPanelW - 50;
-  const barH = 8;
-  const barY = hpPanelY + (hpPanelH - barH) / 2;
+  const barX = hpPanelX + 40;
+  const barW = hpPanelW - 48;
+  const barH = 7;
+  const barY = rowY + (rowH - barH) / 2;
   const hpFrac = clamp(game.playerHp / PLAYER_MAX_HP, 0, 1);
 
-  // Track
-  roundRect(barX, barY, barW, barH, 4);
+  roundRect(barX, barY, barW, barH, 3);
   ctx.fillStyle = 'rgba(255,255,255,0.06)';
   ctx.fill();
 
   if (hpFrac > 0) {
     const fillW = barW * hpFrac;
-    roundRect(barX, barY, fillW, barH, 4);
+    roundRect(barX, barY, fillW, barH, 3);
     const hpGrad = ctx.createLinearGradient(barX, barY, barX, barY + barH);
     if (isLow) {
       hpGrad.addColorStop(0, '#f47070');
@@ -1635,31 +1555,49 @@ function drawHUD(game: Game): void {
     ctx.fillStyle = hpGrad;
     ctx.fill();
 
-    // Shine
     ctx.save();
-    roundRect(barX, barY, fillW, barH, 4);
+    roundRect(barX, barY, fillW, barH, 3);
     ctx.clip();
     ctx.fillStyle = 'rgba(255,255,255,0.2)';
     ctx.fillRect(barX, barY, fillW, barH / 2);
     ctx.restore();
   }
 
-  // ── Level badge — bottom right, pill shape ──
-  const lvText = `LV ${game.level}`;
-  ctx.font = `800 11px ${activeTheme.fonts.numeric}`;
-  const lvW = ctx.measureText(lvText).width + 18;
-  const lvH = 22;
-  const lvX = WORLD_W - padX - lvW;
-  const lvY = WORLD_H - 50 + 2;
+  // ── Score — top center ──
+  const scoreText = `${game.score}`;
+  ctx.font = `800 15px ${activeTheme.fonts.numeric}`;
+  const scoreMetrics = ctx.measureText(scoreText);
+  const scorePanelW = Math.max(80, scoreMetrics.width + 30);
+  const scorePanelX = (WORLD_W - scorePanelW) / 2;
 
-  // Purple pill
-  roundRect(lvX, lvY, lvW, lvH, 11);
+  drawGlassPanel(scorePanelX, rowY, scorePanelW, rowH, 9);
+
+  ctx.font = `700 8px ${activeTheme.fonts.ui}`;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'top';
+  ctx.fillStyle = 'rgba(255,255,255,0.35)';
+  ctx.fillText('SCORE', WORLD_W / 2, rowY + 3);
+
+  ctx.font = `800 14px ${activeTheme.fonts.numeric}`;
+  ctx.textBaseline = 'bottom';
+  ctx.fillStyle = activeTheme.colors.hudText;
+  ctx.fillText(scoreText, WORLD_W / 2, rowY + rowH - 3);
+
+  // ── Level badge — top right (vertically centered in row) ──
+  const lvText = `LV ${game.level}`;
+  ctx.font = `800 10px ${activeTheme.fonts.numeric}`;
+  const lvW = ctx.measureText(lvText).width + 16;
+  const lvH = 22;
+  const lvX = WORLD_W - 8 - lvW;
+  const lvY = rowY + (rowH - lvH) / 2;
+
+  roundRect(lvX, lvY, lvW, lvH, 10);
   const lvGrad = ctx.createLinearGradient(lvX, lvY, lvX, lvY + lvH);
   lvGrad.addColorStop(0, 'rgba(124,77,255,0.5)');
   lvGrad.addColorStop(1, 'rgba(90,48,204,0.4)');
   ctx.fillStyle = lvGrad;
   ctx.fill();
-  roundRect(lvX, lvY, lvW, lvH, 11);
+  roundRect(lvX, lvY, lvW, lvH, 10);
   ctx.strokeStyle = 'rgba(124,77,255,0.5)';
   ctx.lineWidth = 0.5;
   ctx.stroke();
@@ -1668,13 +1606,11 @@ function drawHUD(game: Game): void {
   ctx.textBaseline = 'middle';
   ctx.fillStyle = '#d4bbff';
   ctx.fillText(lvText, lvX + lvW / 2, lvY + lvH / 2 + 0.5);
-
-  // Ball queue slots now drawn via drawBallSlots() in world-space
 }
 
 function drawXPBar(game: Game): void {
-  const barH = 6;
-  const barY = WORLD_H - barH;
+  const barH = 4;
+  const barY = 0;
   const barW = WORLD_W;
   const fraction = clamp(game.xp / game.xpToLevel, 0, 1);
 
@@ -1716,6 +1652,66 @@ function drawXPBar(game: Game): void {
   // Top border line
   ctx.fillStyle = 'rgba(255,255,255,0.04)';
   ctx.fillRect(0, barY, barW, 0.5);
+}
+
+let swipeHintAlpha = 1.0;
+let swipeHintDismissed = false;
+
+function drawSwipeHint(game: Game, dt: number): void {
+  // Reset hint on new game
+  if (!game.aimDir && game.score === 0 && swipeHintDismissed) {
+    swipeHintDismissed = false;
+    swipeHintAlpha = 1.0;
+  }
+  if (swipeHintDismissed) return;
+  if (game.state !== 'PLAYING') return;
+
+  // Once player has an aim direction, fade out and dismiss
+  if (game.aimDir) {
+    swipeHintAlpha -= dt * 2.5;
+    if (swipeHintAlpha <= 0) {
+      swipeHintAlpha = 0;
+      swipeHintDismissed = true;
+      return;
+    }
+  }
+
+  const time = performance.now() / 1000;
+  const bob = Math.sin(time * 2) * 3;
+  const cx = WORLD_W / 2;
+  const cy = BALL_SPAWN_Y - 60 + bob;
+
+  ctx.save();
+  ctx.globalAlpha = swipeHintAlpha * (0.8 + Math.sin(time * 1.5) * 0.1);
+
+  // Glass pill background
+  const text = 'Swipe anywhere to aim';
+  ctx.font = `600 11px ${activeTheme.fonts.ui}`;
+  const tw = ctx.measureText(text).width;
+  const pillW = tw + 24;
+  const pillH = 24;
+  const pillX = cx - pillW / 2;
+  const pillY = cy - pillH / 2;
+
+  drawGlassPanel(pillX, pillY, pillW, pillH, 12);
+
+  // Text
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillStyle = 'rgba(255,255,255,0.85)';
+  ctx.fillText(text, cx, cy + 0.5);
+
+  // Small upward arrow below text
+  const arrowY = pillY + pillH + 6;
+  ctx.beginPath();
+  ctx.moveTo(cx, arrowY + 8);
+  ctx.lineTo(cx - 5, arrowY + 14);
+  ctx.lineTo(cx + 5, arrowY + 14);
+  ctx.closePath();
+  ctx.fillStyle = 'rgba(255,255,255,0.4)';
+  ctx.fill();
+
+  ctx.restore();
 }
 
 function drawCombo(game: Game): void {
@@ -1779,7 +1775,7 @@ function drawLevelUp(game: Game): void {
   ctx.font = `800 10px ${activeTheme.fonts.numeric}`;
   const lvBadgeW = ctx.measureText(lvBadge).width + 20;
   const lvBadgeX = (WORLD_W - lvBadgeW) / 2;
-  const lvBadgeY = 64;
+  const lvBadgeY = 52;
   roundRect(lvBadgeX, lvBadgeY, lvBadgeW, 20, 10);
   ctx.fillStyle = 'rgba(124,77,255,0.35)';
   ctx.fill();
@@ -1800,11 +1796,11 @@ function drawLevelUp(game: Game): void {
   ctx.shadowBlur = 16;
   ctx.font = `900 26px ${activeTheme.fonts.display}`;
   // Gradient text
-  const titleGrad = ctx.createLinearGradient(0, 86, 0, 108);
+  const titleGrad = ctx.createLinearGradient(0, 74, 0, 96);
   titleGrad.addColorStop(0, '#ffffff');
   titleGrad.addColorStop(1, activeTheme.colors.aimLine);
   ctx.fillStyle = titleGrad;
-  ctx.fillText('CHOOSE UPGRADE', WORLD_W / 2, 100);
+  ctx.fillText('CHOOSE UPGRADE', WORLD_W / 2, 88);
   ctx.restore();
 
   // Decorative line under title
@@ -1814,7 +1810,7 @@ function drawLevelUp(game: Game): void {
   lineGrad.addColorStop(0.5, 'rgba(124,77,255,0.5)');
   lineGrad.addColorStop(1, 'rgba(124,77,255,0)');
   ctx.fillStyle = lineGrad;
-  ctx.fillRect(WORLD_W / 2 - lineW, 116, lineW * 2, 1);
+  ctx.fillRect(WORLD_W / 2 - lineW, 104, lineW * 2, 1);
 
   for (let i = 0; i < game.upgradeChoices.length; i++) {
     const opt = game.upgradeChoices[i];
@@ -1884,7 +1880,7 @@ function drawLevelUp(game: Game): void {
     }
 
     // Icon circle bg
-    const iconCX = bounds.x + 32;
+    const iconCX = bounds.x + 36;
     const iconCY = bounds.y + bounds.h / 2;
     ctx.beginPath();
     ctx.arc(iconCX, iconCY, 16, 0, Math.PI * 2);
@@ -1945,16 +1941,19 @@ function drawLevelUp(game: Game): void {
       ctx.fillText(opt.icon, iconCX, iconCY + 1);
     }
 
-    // Name
+    // Name — vertically centered above midline
+    const textX = bounds.x + 64;
     ctx.textAlign = 'left';
-    ctx.font = `800 13px ${activeTheme.fonts.ui}`;
+    ctx.textBaseline = 'bottom';
+    ctx.font = `800 14px ${activeTheme.fonts.ui}`;
     ctx.fillStyle = '#ffffff';
-    ctx.fillText(opt.name, bounds.x + 56, bounds.y + 30);
+    ctx.fillText(opt.name, textX, iconCY - 2);
 
-    // Description
+    // Description — below midline
+    ctx.textBaseline = 'top';
     ctx.font = `600 10px ${activeTheme.fonts.ui}`;
     ctx.fillStyle = 'rgba(255,255,255,0.5)';
-    ctx.fillText(opt.description, bounds.x + 56, bounds.y + 50);
+    ctx.fillText(opt.description, textX, iconCY + 4);
   }
 }
 
@@ -2115,8 +2114,8 @@ export function render(game: Game): void {
     drawLightningArcs(game.lightningArcs);
   }
 
-  drawBallSlots(game, time);
-  drawSwipeIndicator(game);
+  drawBallQueue(game, time);
+  drawAimIndicator(game);
 
   if (game.juice.flashAlpha > 0) {
     drawFlash(game.juice.flashAlpha, game.juice.flashColor, WORLD_W, WORLD_H);
@@ -2127,8 +2126,9 @@ export function render(game: Game): void {
   ctx.save();
   ctx.translate(offsetX, offsetY);
   ctx.scale(scale, scale);
-  drawHUD(game);
   drawXPBar(game);
+  drawHUD(game);
+  drawSwipeHint(game, dt);
   drawCombo(game);
   ctx.restore();
 

@@ -3,6 +3,7 @@ import { MAGAZINE_CAP } from '../utils/constants';
 
 export interface PlayerStats {
   recycleCooldown: number;
+  fireRate: number;
   damage: number;
   ballSpeed: number;
   ballRadius: number;

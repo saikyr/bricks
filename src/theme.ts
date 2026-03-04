@@ -112,7 +112,7 @@ export const theme: ThemeTokens = {
     levelUpCardW: 334,
     levelUpCardH: 82,
     levelUpGap: 12,
-    levelUpStartY: 142,
+    levelUpStartY: 120,
   },
   motion: {
     gemBobFreq: 3.2,

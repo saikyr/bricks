@@ -32,7 +32,7 @@ import {
   WORLD_W, WORLD_H, PLAYER_MAX_HP,
   BALL_SPEED, BALL_RADIUS,
   START_BALL_QUEUE, START_BALL_DAMAGE, MAGAZINE_CAP,
-  BALL_RECYCLE_COOLDOWN, BALL_SPAWN_Y,
+  BALL_RECYCLE_COOLDOWN, FIRE_RATE_COOLDOWN, BALL_SPAWN_Y,
   XP_LEVEL_BASE, XP_LEVEL_GROWTH,
   CELL_SIZE, GRID_LEFT, GRID_COLS, ENEMY_PADDING,
   BLEED_DMG_PER_STACK,
@@ -80,7 +80,8 @@ export interface Game {
   stats: PlayerStats;
   ballQueue: BallType[];
   returningBalls: { type: BallType; cooldown: number }[];
-  lastFireTime: number;
+  aimDir: { dirX: number; dirY: number; originX: number } | null;
+  autoFireCooldown: number;
   xp: number;
   xpToLevel: number;
   level: number;
@@ -117,6 +118,7 @@ export function createGame(input: InputState): Game {
     input,
     stats: {
       recycleCooldown: BALL_RECYCLE_COOLDOWN,
+      fireRate: FIRE_RATE_COOLDOWN,
       damage: START_BALL_DAMAGE,
       ballSpeed: BALL_SPEED,
       ballRadius: BALL_RADIUS,
@@ -125,7 +127,8 @@ export function createGame(input: InputState): Game {
     },
     ballQueue: [...START_BALL_QUEUE],
     returningBalls: [],
-    lastFireTime: 0,
+    aimDir: null,
+    autoFireCooldown: 0,
     xp: 0,
     xpToLevel: xpForLevel(1),
     level: 1,
@@ -250,30 +253,38 @@ function updatePlaying(game: Game, dt: number): void {
     }
   }
 
-  // 2. Swipe-based firing — pop from front of magazine
+  // 2. Swipe sets aim direction
   const swipe = consumeSwipe(game.input);
-  if (swipe && game.ballQueue.length > 0) {
-    const ballType = game.ballQueue.shift()!;
-    game.lastFireTime = performance.now() / 1000;
-    // Add spread
-    const spread = (Math.random() - 0.5) * (6 * Math.PI / 180);
-    const cos = Math.cos(spread);
-    const sin = Math.sin(spread);
-    const dirX = swipe.dirX * cos - swipe.dirY * sin;
-    const dirY = swipe.dirX * sin + swipe.dirY * cos;
+  if (swipe) {
+    game.aimDir = { dirX: swipe.dirX, dirY: swipe.dirY, originX: swipe.originX };
+  }
 
-    const ballRadius = ballType === 'normal' ? game.stats.ballRadius : game.stats.ballRadius * 1.6;
-    const spawnX = clamp(swipe.originX, GRID_LEFT + game.stats.ballRadius, GRID_RIGHT - game.stats.ballRadius);
-    const ball = createBall(
-      spawnX, BALL_SPAWN_Y,
-      dirX, dirY,
-      ballType,
-      0,
-      game.stats.ballSpeed,
-      ballRadius,
-    );
-    game.balls.push(ball);
-    playShoot();
+  // 3. Auto-fire in aim direction
+  if (game.aimDir && game.ballQueue.length > 0) {
+    game.autoFireCooldown -= dt;
+    if (game.autoFireCooldown <= 0) {
+      const ballType = game.ballQueue.shift()!;
+      game.autoFireCooldown = game.stats.fireRate;
+
+      const spread = (Math.random() - 0.5) * (6 * Math.PI / 180);
+      const cos = Math.cos(spread);
+      const sin = Math.sin(spread);
+      const dirX = game.aimDir.dirX * cos - game.aimDir.dirY * sin;
+      const dirY = game.aimDir.dirX * sin + game.aimDir.dirY * cos;
+
+      const ballRadius = ballType === 'normal' ? game.stats.ballRadius : game.stats.ballRadius * 1.6;
+      const spawnX = clamp(game.aimDir.originX, GRID_LEFT + ballRadius, GRID_RIGHT - ballRadius);
+      const ball = createBall(
+        spawnX, BALL_SPAWN_Y,
+        dirX, dirY,
+        ballType,
+        0,
+        game.stats.ballSpeed,
+        ballRadius,
+      );
+      game.balls.push(ball);
+      playShoot();
+    }
   }
 
   // 3. Update all balls

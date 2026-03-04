@@ -19,10 +19,11 @@ export const BALL_MAX_AGE = 8; // seconds before ball expires
 
 // Ball queue system
 import type { BallType } from '../entities/ball';
-export const START_BALL_QUEUE: BallType[] = ['normal', 'normal', 'normal'];
+export const START_BALL_QUEUE: BallType[] = ['normal', 'normal', 'normal', 'normal', 'normal'];
 export const MAGAZINE_CAP = 5;
 export const START_BALL_DAMAGE = 10;
-export const BALL_RECYCLE_COOLDOWN = 0.3; // seconds before slot reopens
+export const BALL_RECYCLE_COOLDOWN = 1.0; // seconds before slot reopens
+export const FIRE_RATE_COOLDOWN = 0.5; // seconds between shots while aiming
 export const MIN_SWIPE_DISTANCE = 20; // world units, min drag to fire
 export const BALL_SPAWN_Y = WORLD_H - 20;
 
