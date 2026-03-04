@@ -9,7 +9,6 @@ export interface Ball {
   vel: Vec2;
   radius: number;
   active: boolean;       // currently in flight (hitting enemies)
-  returning: boolean;    // bounced off floor, homing back to player
   age: number;           // lifetime in seconds
   trail: Vec2[];         // recent positions for trail effect
   type: BallType;
@@ -30,7 +29,6 @@ export function createBall(
     vel: vec2(dirX * speed, dirY * speed),
     radius,
     active: true,
-    returning: false,
     age: 0,
     trail: [],
     type,

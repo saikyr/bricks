@@ -1,19 +1,19 @@
 import { Game, LaserBeam, LightningArc } from './game';
 import { Enemy, getSpawnScale, getEnemyColor } from './entities/enemy';
 import { hasAnyStatus } from './systems/status';
-import { Ball } from './entities/ball';
-import { Gem } from './entities/gem';
+import { Ball, BallType } from './entities/ball';
 import { Particle, DamageNumber } from './entities/particle';
+import { RARITY_COLORS, Rarity } from './systems/upgrade';
 import { clamp } from './utils/math';
 import {
   WORLD_W,
   WORLD_H,
   PLAYER_MAX_HP,
-  PLAYER_RADIUS,
   GRID_LEFT,
   GRID_COLS,
   CELL_SIZE,
   ENEMY_CORNER_RADIUS,
+  BALL_SPAWN_Y,
 } from './utils/constants';
 import { activeTheme } from './theme';
 
@@ -103,20 +103,6 @@ function getLevelUpCardBounds(index: number): { x: number; y: number; w: number;
   return { x, y, w, h };
 }
 
-function getUpgradeAccent(id: string): string {
-  if (id.includes('explosive')) return '#ff9f5c';
-  if (id.includes('spectral')) return '#57f2be';
-  if (id.includes('laser')) return '#b388ff';
-  if (id.includes('bleed')) return '#ff4466';
-  if (id.includes('burn')) return '#ffcc00';
-  if (id.includes('poison')) return '#44cc44';
-  if (id.includes('lightning')) return '#88ddff';
-  if (id.includes('freeze')) return '#aaeeff';
-  if (id.includes('damage')) return '#ffcc66';
-  if (id.includes('ball_')) return '#70e9ff';
-  if (id.includes('fire')) return '#87a9ff';
-  return '#66d7ff';
-}
 
 export function initRenderer(c: HTMLCanvasElement): { scale: number; offsetX: number; offsetY: number } {
   canvas = c;
@@ -221,82 +207,6 @@ function drawBackground(dt: number, time: number): void {
   grad.addColorStop(1, 'rgba(0,0,0,0.5)');
   ctx.fillStyle = grad;
   ctx.fillRect(0, 0, WORLD_W, WORLD_H);
-}
-
-function drawPlayer(game: Game): void {
-  const px = game.playerPos.x;
-  const py = game.playerPos.y;
-  const size = PLAYER_RADIUS * 2.8;
-  const half = size / 2;
-  const cr = ENEMY_CORNER_RADIUS;
-
-  ctx.save();
-  ctx.translate(px, py);
-
-  // Pulsing cyan glow halo — larger, more visible
-  const pulseAmt = game.juice.screenPulse || 0;
-  const glowR = size * (1.8 + pulseAmt * 0.5);
-  const glowAlpha = 0.35 + pulseAmt * 0.2;
-  const glowGrad = ctx.createRadialGradient(0, 0, half * 0.3, 0, 0, glowR);
-  glowGrad.addColorStop(0, rgba(activeTheme.colors.playerGlow, glowAlpha));
-  glowGrad.addColorStop(0.5, rgba(activeTheme.colors.playerGlow, glowAlpha * 0.3));
-  glowGrad.addColorStop(1, 'rgba(0,0,0,0)');
-  ctx.fillStyle = glowGrad;
-  ctx.beginPath();
-  ctx.arc(0, 0, glowR, 0, Math.PI * 2);
-  ctx.fill();
-
-  // Drop shadow
-  ctx.save();
-  ctx.globalAlpha = 0.3;
-  roundRect(-half + 1, -half + 2, size, size, cr);
-  ctx.fillStyle = '#000000';
-  ctx.fill();
-  ctx.restore();
-
-  // Rounded square body — vertical gradient with more contrast
-  roundRect(-half, -half, size, size, cr);
-  const bodyGrad = ctx.createLinearGradient(0, -half, 0, half);
-  bodyGrad.addColorStop(0, lighten(activeTheme.colors.playerCore, 0.35));
-  bodyGrad.addColorStop(0.5, activeTheme.colors.playerCore);
-  bodyGrad.addColorStop(1, darken(activeTheme.colors.playerCore, 0.3));
-  ctx.fillStyle = bodyGrad;
-  ctx.fill();
-
-  // Inner core glow — bright center radial
-  ctx.save();
-  roundRect(-half, -half, size, size, cr);
-  ctx.clip();
-  const coreGrad = ctx.createRadialGradient(0, -half * 0.2, 0, 0, 0, half * 0.9);
-  coreGrad.addColorStop(0, 'rgba(255,255,255,0.2)');
-  coreGrad.addColorStop(1, 'rgba(255,255,255,0)');
-  ctx.fillStyle = coreGrad;
-  ctx.fillRect(-half, -half, size, size);
-  ctx.restore();
-
-  // Gloss arc — semi-ellipse across top ~35%
-  ctx.save();
-  roundRect(-half, -half, size, size, cr);
-  ctx.clip();
-  ctx.beginPath();
-  ctx.ellipse(0, -half, half * 1.1, size * 0.35, 0, 0, Math.PI);
-  ctx.fillStyle = 'rgba(255,255,255,0.22)';
-  ctx.fill();
-  ctx.restore();
-
-  // Bright white rim stroke
-  roundRect(-half, -half, size, size, cr);
-  ctx.strokeStyle = 'rgba(255,255,255,0.3)';
-  ctx.lineWidth = 1;
-  ctx.stroke();
-
-  // Dark border for definition
-  roundRect(-half, -half, size, size, cr);
-  ctx.strokeStyle = 'rgba(0,0,0,0.45)';
-  ctx.lineWidth = 1.5;
-  ctx.stroke();
-
-  ctx.restore();
 }
 
 function drawEnemy(enemy: Enemy, time: number): void {
@@ -466,7 +376,7 @@ function getBallStyle(ball: Ball) {
 }
 
 function drawBall(ball: Ball, time: number): void {
-  if (!ball.active && !ball.returning) return;
+  if (!ball.active) return;
 
   if (ball.type === 'spectral') {
     drawSpectralBall(ball, time);
@@ -523,7 +433,7 @@ function drawNormalBall(ball: Ball, time: number): void {
   ctx.fill();
 
   // Spherical gradient body
-  const liveAlpha = ball.returning ? 0.86 : 1;
+  const liveAlpha = 1;
   ctx.save();
   ctx.globalAlpha = liveAlpha;
   const offX = -ball.radius * 0.35;
@@ -605,7 +515,7 @@ function drawSpectralBall(ball: Ball, time: number): void {
 
   // Faint shell — barely visible
   ctx.save();
-  ctx.globalAlpha = (ball.returning ? 0.2 : 0.3) + edgePulse * 0.1;
+  ctx.globalAlpha = (0.3) + edgePulse * 0.1;
   const shellGrad = ctx.createRadialGradient(bx, by, br * 0.4, bx, by, br);
   shellGrad.addColorStop(0, rgba(style.core, 0.03));
   shellGrad.addColorStop(0.6, rgba(style.core, 0.1));
@@ -720,7 +630,7 @@ function drawExplosiveBall(ball: Ball, time: number): void {
 
   // Orange-red body with bright white center
   ctx.save();
-  ctx.globalAlpha = ball.returning ? 0.86 : 1;
+  ctx.globalAlpha = 1;
   const sg = ctx.createRadialGradient(bx, by, 0, bx, by, drawR);
   sg.addColorStop(0, '#ffffff');
   sg.addColorStop(0.2, '#ffee88');
@@ -800,7 +710,7 @@ function drawLaserBall(ball: Ball, time: number): void {
 
   // Purple-white body with bright white center
   ctx.save();
-  ctx.globalAlpha = ball.returning ? 0.86 : 1;
+  ctx.globalAlpha = 1;
   const sg = ctx.createRadialGradient(bx, by, 0, bx, by, drawR);
   sg.addColorStop(0, '#ffffff');
   sg.addColorStop(0.2, '#e0ccff');
@@ -857,7 +767,7 @@ function drawBleedBall(ball: Ball, time: number): void {
 
   // Deep red spherical body
   ctx.save();
-  ctx.globalAlpha = ball.returning ? 0.86 : 1;
+  ctx.globalAlpha = 1;
   const offX = -br * 0.3, offY = -br * 0.3;
   const sg = ctx.createRadialGradient(bx + offX, by + offY, br * 0.05, bx, by, br);
   sg.addColorStop(0, '#ff6677');
@@ -934,7 +844,7 @@ function drawBurnBall(ball: Ball, time: number): void {
   const flicker = 1 + Math.sin(time * 12 + ball.queueSlot) * 0.04;
   const drawR = br * flicker;
   ctx.save();
-  ctx.globalAlpha = ball.returning ? 0.86 : 1;
+  ctx.globalAlpha = 1;
   const sg = ctx.createRadialGradient(bx, by, 0, bx, by, drawR);
   sg.addColorStop(0, '#ffffcc');
   sg.addColorStop(0.25, '#ffcc00');
@@ -985,7 +895,7 @@ function drawPoisonBall(ball: Ball, time: number): void {
 
   // Bubbling green body
   ctx.save();
-  ctx.globalAlpha = ball.returning ? 0.86 : 1;
+  ctx.globalAlpha = 1;
   const offX = -br * 0.3, offY = -br * 0.3;
   const sg = ctx.createRadialGradient(bx + offX, by + offY, br * 0.05, bx, by, br);
   sg.addColorStop(0, '#88ff88');
@@ -1061,7 +971,7 @@ function drawLightningBall(ball: Ball, time: number): void {
 
   // Bright white-blue body
   ctx.save();
-  ctx.globalAlpha = ball.returning ? 0.86 : 1;
+  ctx.globalAlpha = 1;
   const sg = ctx.createRadialGradient(bx, by, 0, bx, by, br);
   sg.addColorStop(0, '#ffffff');
   sg.addColorStop(0.3, '#ccecff');
@@ -1125,7 +1035,7 @@ function drawFreezeBall(ball: Ball, time: number): void {
 
   // Icy white-cyan body
   ctx.save();
-  ctx.globalAlpha = ball.returning ? 0.86 : 1;
+  ctx.globalAlpha = 1;
   const offX = -br * 0.3, offY = -br * 0.3;
   const sg = ctx.createRadialGradient(bx + offX, by + offY, br * 0.05, bx, by, br);
   sg.addColorStop(0, '#ffffff');
@@ -1315,104 +1225,6 @@ function drawParticle(p: Particle): void {
   ctx.restore();
 }
 
-function drawGem(gem: Gem, time: number): void {
-  if (!gem.alive) return;
-
-  const r = gem.radius;
-  const bobY = gem.pos.y + Math.sin(time * activeTheme.motion.gemBobFreq + gem.pos.x * 0.05) * activeTheme.motion.gemBobAmp;
-
-  ctx.save();
-  ctx.translate(gem.pos.x, bobY);
-
-  // Stronger glow halo with sine pulse
-  const glowR = r * 3;
-  const glowAlpha = 0.35 + Math.sin(time * 2.5) * 0.08;
-  const glowGrad = ctx.createRadialGradient(0, 0, r * 0.2, 0, 0, glowR);
-  glowGrad.addColorStop(0, rgba(activeTheme.colors.gemGlow, glowAlpha));
-  glowGrad.addColorStop(0.4, rgba(activeTheme.colors.gemGlow, glowAlpha * 0.3));
-  glowGrad.addColorStop(1, 'rgba(0,0,0,0)');
-  ctx.fillStyle = glowGrad;
-  ctx.beginPath();
-  ctx.arc(0, 0, glowR, 0, Math.PI * 2);
-  ctx.fill();
-
-  // 4-triangle facets with inner gradients
-  const gemBase = activeTheme.colors.gem;
-  const topColor = lighten(gemBase, 0.45);
-  const leftColor = lighten(gemBase, 0.15);
-  const rightColor = darken(gemBase, 0.05);
-  const bottomColor = darken(gemBase, 0.25);
-
-  // Top-right facet
-  ctx.beginPath();
-  ctx.moveTo(0, -r); ctx.lineTo(r, 0); ctx.lineTo(0, 0);
-  ctx.closePath();
-  const trGrad = ctx.createLinearGradient(0, -r, r * 0.5, 0);
-  trGrad.addColorStop(0, topColor);
-  trGrad.addColorStop(1, lighten(gemBase, 0.25));
-  ctx.fillStyle = trGrad;
-  ctx.fill();
-
-  // Top-left facet
-  ctx.beginPath();
-  ctx.moveTo(0, -r); ctx.lineTo(-r, 0); ctx.lineTo(0, 0);
-  ctx.closePath();
-  const tlGrad = ctx.createLinearGradient(0, -r, -r * 0.5, 0);
-  tlGrad.addColorStop(0, lighten(gemBase, 0.3));
-  tlGrad.addColorStop(1, leftColor);
-  ctx.fillStyle = tlGrad;
-  ctx.fill();
-
-  // Bottom-right facet
-  ctx.beginPath();
-  ctx.moveTo(r, 0); ctx.lineTo(0, r); ctx.lineTo(0, 0);
-  ctx.closePath();
-  ctx.fillStyle = rightColor;
-  ctx.fill();
-
-  // Bottom-left facet
-  ctx.beginPath();
-  ctx.moveTo(-r, 0); ctx.lineTo(0, r); ctx.lineTo(0, 0);
-  ctx.closePath();
-  ctx.fillStyle = bottomColor;
-  ctx.fill();
-
-  // Diamond outline
-  ctx.beginPath();
-  ctx.moveTo(0, -r); ctx.lineTo(r, 0); ctx.lineTo(0, r); ctx.lineTo(-r, 0);
-  ctx.closePath();
-  ctx.strokeStyle = 'rgba(255,255,255,0.35)';
-  ctx.lineWidth = 0.7;
-  ctx.stroke();
-
-  // Center cross seam
-  ctx.beginPath();
-  ctx.moveTo(0, -r); ctx.lineTo(0, r);
-  ctx.moveTo(-r, 0); ctx.lineTo(r, 0);
-  ctx.strokeStyle = 'rgba(255,255,255,0.12)';
-  ctx.lineWidth = 0.5;
-  ctx.stroke();
-
-  // Star sparkle rays — cross pattern
-  const sparkAlpha = 0.4 + Math.sin(time * 5) * 0.35;
-  ctx.save();
-  ctx.globalAlpha = sparkAlpha;
-  ctx.rotate(time * 0.8);
-  ctx.strokeStyle = '#ffffff';
-  ctx.lineWidth = 0.8;
-  const rayLen = r * 0.7;
-  for (let a = 0; a < 4; a++) {
-    const angle = (a * Math.PI) / 2;
-    ctx.beginPath();
-    ctx.moveTo(0, 0);
-    ctx.lineTo(Math.cos(angle) * rayLen, Math.sin(angle) * rayLen);
-    ctx.stroke();
-  }
-  ctx.restore();
-
-  ctx.restore();
-}
-
 function drawDamageNumber(dn: DamageNumber): void {
   if (dn.life <= 0) return;
   const progress = 1 - dn.life / dn.maxLife;
@@ -1454,130 +1266,249 @@ function drawDamageNumber(dn: DamageNumber): void {
   ctx.restore();
 }
 
-function drawAimLine(game: Game): void {
-  if (game.state !== 'PLAYING') return;
+// Smoothed startX so the row doesn't jump when slot count changes
+let slotRowX = -1;
 
-  const px = game.playerPos.x;
-  const py = game.playerPos.y;
-  const aimX = game.input.aimPos.x - px;
-  const aimY = game.input.aimPos.y - py;
-  const len = Math.hypot(aimX, aimY);
-  if (len < 0.001) return;
+function drawBallSlots(game: Game, time: number): void {
+  const queue = game.ballQueue;
+  const returning = game.returningBalls;
+  const inFlight = game.balls.filter(b => b.active);
+  const totalSlots = queue.length + returning.length + inFlight.length;
+  if (totalSlots === 0) return;
 
-  let dx = aimX / len;
-  let dy = aimY / len;
-  if (dy > -0.08) {
-    const ny = -0.08;
-    const norm = Math.hypot(dx, ny);
-    dx /= norm;
-    dy = ny / norm;
+  const spacing = 18;
+  const totalW = (totalSlots - 1) * spacing;
+  const targetX = WORLD_W / 2 - totalW / 2;
+  // Smooth the row position so it doesn't snap on fire
+  if (slotRowX < 0) slotRowX = targetX;
+  else slotRowX += (targetX - slotRowX) * 0.25;
+  const startX = slotRowX;
+  const y = BALL_SPAWN_Y - 18;
+  const maxCooldown = game.stats.recycleCooldown;
+
+  // "Next" ball scale-up transition
+  const fireDuration = 0.15;
+  const fireAge = time - game.lastFireTime;
+  const promoteT = fireAge < fireDuration ? fireAge / fireDuration : 1;
+  const promoteEase = promoteT * (2 - promoteT);
+
+  type SlotDraw =
+    | { kind: 'inflight'; type: BallType }
+    | { kind: 'returning'; type: BallType; cooldown: number }
+    | { kind: 'ready'; type: BallType; isNext: boolean };
+
+  const slots: SlotDraw[] = new Array(totalSlots);
+  let ri = totalSlots - 1;
+
+  for (let i = 0; i < queue.length; i++) {
+    slots[ri--] = { kind: 'ready', type: queue[i], isNext: i === 0 };
   }
 
-  const leftBound = GRID_LEFT;
-  const rightBound = GRID_LEFT + GRID_COLS * CELL_SIZE;
-  const topBound = 0;
+  const sortedReturning = [...returning].sort((a, b) => a.cooldown - b.cooldown);
+  for (const rb of sortedReturning) {
+    slots[ri--] = { kind: 'returning', type: rb.type, cooldown: rb.cooldown };
+  }
 
-  const maxSegments = 3;
-  const points: { x: number; y: number; bounced: boolean }[] = [{ x: px, y: py, bounced: false }];
+  for (const b of inFlight) {
+    slots[ri--] = { kind: 'inflight', type: b.type };
+  }
 
-  let cx = px;
-  let cy = py;
+  for (let i = 0; i < slots.length; i++) {
+    const s = slots[i];
+    const ballStyle = activeTheme.ball[s.type];
+    const color = ballStyle.core;
+    const colorForGrad = color === '#ffffff' ? '#aaccff' : color;
+    const cx = startX + i * spacing;
 
-  for (let bounce = 0; bounce < maxSegments; bounce++) {
-    let tMin = 1000;
-    let hitWall = false;
+    if (s.kind === 'inflight') {
+      ctx.beginPath();
+      ctx.arc(cx, y, 5, 0, Math.PI * 2);
+      ctx.strokeStyle = 'rgba(255,255,255,0.15)';
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
+    } else if (s.kind === 'returning') {
+      const r = 5;
+      ctx.beginPath();
+      ctx.arc(cx, y, r, 0, Math.PI * 2);
+      ctx.fillStyle = 'rgba(255,255,255,0.08)';
+      ctx.fill();
+
+      const progress = 1 - s.cooldown / maxCooldown;
+      const arcStart = -Math.PI / 2;
+      const arcEnd = arcStart + Math.PI * 2 * progress;
+      ctx.beginPath();
+      ctx.moveTo(cx, y);
+      ctx.arc(cx, y, r, arcStart, arcEnd);
+      ctx.closePath();
+      ctx.fillStyle = rgba(colorForGrad, 0.45);
+      ctx.fill();
+    } else {
+      const isNext = s.isNext;
+      // New "next" ball grows from 5→7; others stay at 5
+      const r = isNext ? 5 + 2 * promoteEase : 5;
+      const blur = isNext ? 3 + 7 * promoteEase : 3;
+      const bob = isNext ? Math.sin(time * 5) * 2.5 * promoteEase : 0;
+      const dy = y - bob;
+
+      ctx.save();
+      ctx.shadowColor = ballStyle.glow;
+      ctx.shadowBlur = blur;
+
+      const grad = ctx.createRadialGradient(cx - 1, dy - 1, 0, cx, dy, r);
+      grad.addColorStop(0, '#ffffff');
+      grad.addColorStop(0.45, color);
+      grad.addColorStop(1, darken(colorForGrad, 0.35));
+      ctx.beginPath();
+      ctx.arc(cx, dy, r, 0, Math.PI * 2);
+      ctx.fillStyle = grad;
+      ctx.fill();
+      ctx.restore();
+
+      if (isNext) {
+        const ringAlpha = (0.5 + Math.sin(time * 4) * 0.2) * promoteEase;
+        ctx.beginPath();
+        ctx.arc(cx, dy, r + 2.5, 0, Math.PI * 2);
+        ctx.strokeStyle = rgba(ballStyle.glow, ringAlpha);
+        ctx.lineWidth = 1.2;
+        ctx.stroke();
+      } else {
+        ctx.beginPath();
+        ctx.arc(cx, dy, r, 0, Math.PI * 2);
+        ctx.fillStyle = 'rgba(0,0,0,0.25)';
+        ctx.fill();
+      }
+    }
+  }
+}
+
+
+
+function drawSwipeIndicator(game: Game): void {
+  if (game.state !== 'PLAYING') return;
+  if (!game.input.swiping || !game.input.swipeStart || !game.input.swipeCurrent) return;
+
+  const start = game.input.swipeStart;
+  const current = game.input.swipeCurrent;
+  const sdx = current.x - start.x;
+  const sdy = current.y - start.y;
+  const sDist = Math.sqrt(sdx * sdx + sdy * sdy);
+  if (sDist < 5) return;
+
+  // Normalize direction, clamp upward
+  let dx = sdx / sDist;
+  let dy = sdy / sDist;
+  if (dy > -0.1) {
+    dy = -0.1;
+    const len = Math.hypot(dx, dy);
+    dx /= len;
+    dy /= len;
+  }
+
+  const leftWall = GRID_LEFT;
+  const rightWall = GRID_LEFT + GRID_COLS * CELL_SIZE;
+  const spawnX = clamp(start.x, leftWall + 1, rightWall - 1);
+  const spawnY = BALL_SPAWN_Y;
+
+  // Trace ray with wall bounces
+  const points: { x: number; y: number }[] = [{ x: spawnX, y: spawnY }];
+  let rx = spawnX;
+  let ry = spawnY;
+  let rdx = dx;
+  let rdy = dy;
+  const maxBounces = 3;
+  const rayLen = 800;
+
+  for (let seg = 0; seg < maxBounces; seg++) {
+    // Find nearest wall or top intersection
+    let tBest = rayLen;
+    let bounced = false;
+
+    // Left wall
+    if (rdx < 0) {
+      const t = (leftWall - rx) / rdx;
+      if (t > 0.5 && t < tBest) { tBest = t; bounced = true; }
+    }
+    // Right wall
+    if (rdx > 0) {
+      const t = (rightWall - rx) / rdx;
+      if (t > 0.5 && t < tBest) { tBest = t; bounced = true; }
+    }
+    // Top
+    if (rdy < 0) {
+      const t = -ry / rdy;
+      if (t > 0.5 && t < tBest) { tBest = t; bounced = false; }
+    }
+
+    // Check enemy intersections
     let hitEnemy = false;
-
-    if (dx < 0) {
-      const t = (leftBound - cx) / dx;
-      if (t > 0.01 && t < tMin) { tMin = t; hitWall = true; hitEnemy = false; }
-    }
-    if (dx > 0) {
-      const t = (rightBound - cx) / dx;
-      if (t > 0.01 && t < tMin) { tMin = t; hitWall = true; hitEnemy = false; }
-    }
-    if (dy < 0) {
-      const t = (topBound - cy) / dy;
-      if (t > 0.01 && t < tMin) { tMin = t; hitWall = false; hitEnemy = false; }
-    }
-
     for (const e of game.enemies) {
       if (!e.alive) continue;
-      const ex = e.pos.x;
-      const ey = e.pos.y;
-      const ex2 = ex + e.width;
-      const ey2 = ey + e.height;
+      const ex1 = e.pos.x;
+      const ey1 = e.pos.y;
+      const ex2 = ex1 + e.width;
+      const ey2 = ey1 + e.height;
 
       let tNear = -Infinity;
       let tFar = Infinity;
 
-      if (dx !== 0) {
-        let t1 = (ex - cx) / dx;
-        let t2 = (ex2 - cx) / dx;
+      if (rdx !== 0) {
+        let t1 = (ex1 - rx) / rdx;
+        let t2 = (ex2 - rx) / rdx;
         if (t1 > t2) { const tmp = t1; t1 = t2; t2 = tmp; }
         tNear = Math.max(tNear, t1);
         tFar = Math.min(tFar, t2);
-      } else if (cx < ex || cx > ex2) {
-        continue;
-      }
+      } else if (rx < ex1 || rx > ex2) continue;
 
-      if (dy !== 0) {
-        let t1 = (ey - cy) / dy;
-        let t2 = (ey2 - cy) / dy;
+      if (rdy !== 0) {
+        let t1 = (ey1 - ry) / rdy;
+        let t2 = (ey2 - ry) / rdy;
         if (t1 > t2) { const tmp = t1; t1 = t2; t2 = tmp; }
         tNear = Math.max(tNear, t1);
         tFar = Math.min(tFar, t2);
-      } else if (cy < ey || cy > ey2) {
-        continue;
-      }
+      } else if (ry < ey1 || ry > ey2) continue;
 
-      if (tNear <= tFar && tFar > 0.01 && tNear < tMin) {
-        const tHit = tNear > 0.01 ? tNear : tFar;
-        if (tHit > 0.01 && tHit < tMin) {
-          tMin = tHit;
-          hitWall = false;
+      if (tNear <= tFar && tFar > 0.5) {
+        const tHit = tNear > 0.5 ? tNear : tFar;
+        if (tHit < tBest) {
+          tBest = tHit;
+          bounced = false;
           hitEnemy = true;
         }
       }
     }
 
-    const maxLen = 420;
-    if (tMin > maxLen) tMin = maxLen;
+    const nx = rx + rdx * tBest;
+    const ny = ry + rdy * tBest;
+    points.push({ x: nx, y: ny });
 
-    const nx = cx + dx * tMin;
-    const ny = cy + dy * tMin;
-    points.push({ x: nx, y: ny, bounced: hitWall && ny > topBound + 0.2 });
+    if (hitEnemy || !bounced) break;
 
-    if (hitEnemy) break;
-    if (ny <= topBound + 0.2) break;
-    if (!hitWall) break;
-
-    dx = -dx;
-    cx = nx;
-    cy = ny;
+    // Reflect off wall (horizontal bounce)
+    rdx = -rdx;
+    rx = nx;
+    ry = ny;
   }
 
-  // Dashed line with glow
+  // Draw: dashed line with glow per segment
   ctx.save();
   ctx.setLineDash([6, 5]);
   ctx.lineCap = 'round';
-  ctx.lineWidth = 1.5;
 
   for (let i = 0; i < points.length - 1; i++) {
     const from = points[i];
     const to = points[i + 1];
-    const segmentAlpha = 0.5 - i * 0.18;
+    const alpha = 0.5 - i * 0.15;
 
-    // Faint glow underline
-    ctx.strokeStyle = rgba(activeTheme.colors.aimLine, segmentAlpha * 0.3);
+    // Glow
+    ctx.strokeStyle = rgba(activeTheme.colors.aimLine, alpha * 0.3);
     ctx.lineWidth = 4;
     ctx.beginPath();
     ctx.moveTo(from.x, from.y);
     ctx.lineTo(to.x, to.y);
     ctx.stroke();
 
-    // Crisp line
-    ctx.strokeStyle = rgba(activeTheme.colors.aimLine, segmentAlpha);
+    // Core
+    ctx.strokeStyle = rgba(activeTheme.colors.aimLine, alpha);
     ctx.lineWidth = 1.5;
     ctx.beginPath();
     ctx.moveTo(from.x, from.y);
@@ -1586,19 +1517,14 @@ function drawAimLine(game: Game): void {
   }
   ctx.setLineDash([]);
 
-  // Tip dot with glow
+  // Tip dot
   const tip = points[points.length - 1];
-  const tipGrad = ctx.createRadialGradient(tip.x, tip.y, 0, tip.x, tip.y, 6);
-  tipGrad.addColorStop(0, rgba(activeTheme.colors.aimLine, 0.4));
+  const tipGrad = ctx.createRadialGradient(tip.x, tip.y, 0, tip.x, tip.y, 5);
+  tipGrad.addColorStop(0, rgba(activeTheme.colors.aimLine, 0.5));
   tipGrad.addColorStop(1, 'rgba(0,0,0,0)');
   ctx.fillStyle = tipGrad;
   ctx.beginPath();
-  ctx.arc(tip.x, tip.y, 6, 0, Math.PI * 2);
-  ctx.fill();
-
-  ctx.beginPath();
-  ctx.arc(tip.x, tip.y, 2.5, 0, Math.PI * 2);
-  ctx.fillStyle = rgba(activeTheme.colors.aimLine, 0.6);
+  ctx.arc(tip.x, tip.y, 5, 0, Math.PI * 2);
   ctx.fill();
 
   ctx.restore();
@@ -1743,65 +1669,7 @@ function drawHUD(game: Game): void {
   ctx.fillStyle = '#d4bbff';
   ctx.fillText(lvText, lvX + lvW / 2, lvY + lvH / 2 + 0.5);
 
-  // ── Ball queue — top right, compact visual balls ──
-  const totalByType: Record<string, number> = {};
-  const inFlightByType: Record<string, number> = {};
-  for (const t of game.ballQueue) totalByType[t] = (totalByType[t] || 0) + 1;
-  for (const b of game.balls) {
-    if (b.active || b.returning) {
-      inFlightByType[b.type] = (inFlightByType[b.type] || 0) + 1;
-    }
-  }
-
-  const rows: { key: string; color: string; glow: string }[] = [
-    { key: 'normal', color: activeTheme.ball.normal.core, glow: activeTheme.ball.normal.glow },
-    { key: 'spectral', color: activeTheme.ball.spectral.core, glow: activeTheme.ball.spectral.glow },
-    { key: 'explosive', color: activeTheme.ball.explosive.core, glow: activeTheme.ball.explosive.glow },
-    { key: 'laser', color: activeTheme.ball.laser.core, glow: activeTheme.ball.laser.glow },
-    { key: 'bleed', color: activeTheme.ball.bleed.core, glow: activeTheme.ball.bleed.glow },
-    { key: 'burn', color: activeTheme.ball.burn.core, glow: activeTheme.ball.burn.glow },
-    { key: 'poison', color: activeTheme.ball.poison.core, glow: activeTheme.ball.poison.glow },
-    { key: 'lightning', color: activeTheme.ball.lightning.core, glow: activeTheme.ball.lightning.glow },
-    { key: 'freeze', color: activeTheme.ball.freeze.core, glow: activeTheme.ball.freeze.glow },
-  ];
-
-  // Only show rows that have balls
-  const activeRows = rows.filter(r => (totalByType[r.key] || 0) > 0);
-  if (activeRows.length > 0) {
-    const qPanelW = 58;
-    const rowH = 22;
-    const qPanelH = 10 + activeRows.length * rowH;
-    const qPanelX = WORLD_W - padX - qPanelW;
-    const qPanelY = padY;
-
-    drawGlassPanel(qPanelX, qPanelY, qPanelW, qPanelH, 8);
-
-    for (let i = 0; i < activeRows.length; i++) {
-      const row = activeRows[i];
-      const ry = qPanelY + 5 + i * rowH + rowH / 2;
-      const total = totalByType[row.key] || 0;
-      const available = Math.max(0, total - (inFlightByType[row.key] || 0));
-
-      // Mini ball with glow
-      const ballX = qPanelX + 14;
-      const ballR = 4;
-      const miniGrad = ctx.createRadialGradient(ballX - 1, ry - 1, 0, ballX, ry, ballR);
-      miniGrad.addColorStop(0, '#ffffff');
-      miniGrad.addColorStop(0.5, row.color);
-      miniGrad.addColorStop(1, darken(row.color === '#ffffff' ? '#aaccff' : row.color, 0.3));
-      ctx.beginPath();
-      ctx.arc(ballX, ry, ballR, 0, Math.PI * 2);
-      ctx.fillStyle = miniGrad;
-      ctx.fill();
-
-      // Count
-      ctx.font = `800 10px ${activeTheme.fonts.numeric}`;
-      ctx.textAlign = 'left';
-      ctx.textBaseline = 'middle';
-      ctx.fillStyle = available > 0 ? activeTheme.colors.hudText : 'rgba(255,255,255,0.3)';
-      ctx.fillText(`${available}/${total}`, qPanelX + 23, ry + 0.5);
-    }
-  }
+  // Ball queue slots now drawn via drawBallSlots() in world-space
 }
 
 function drawXPBar(game: Game): void {
@@ -1951,7 +1819,8 @@ function drawLevelUp(game: Game): void {
   for (let i = 0; i < game.upgradeChoices.length; i++) {
     const opt = game.upgradeChoices[i];
     const bounds = getLevelUpCardBounds(i);
-    const accent = getUpgradeAccent(opt.id);
+    const rarityColor = RARITY_COLORS[opt.rarity];
+    const [rr, rg, rb] = hexToRgb(rarityColor);
 
     // Card shadow
     ctx.save();
@@ -1961,10 +1830,10 @@ function drawLevelUp(game: Game): void {
     ctx.fill();
     ctx.restore();
 
-    // Card gradient bg
+    // Card gradient bg — tinted by rarity
     roundRect(bounds.x, bounds.y, bounds.w, bounds.h, 8);
     const cardGrad = ctx.createLinearGradient(bounds.x, bounds.y, bounds.x, bounds.y + bounds.h);
-    cardGrad.addColorStop(0, '#1e1e3a');
+    cardGrad.addColorStop(0, rgbaFromRgb(rr, rg, rb, 0.08));
     cardGrad.addColorStop(1, '#111122');
     ctx.fillStyle = cardGrad;
     ctx.fill();
@@ -1974,31 +1843,45 @@ function drawLevelUp(game: Game): void {
     roundRect(bounds.x, bounds.y, bounds.w, bounds.h, 8);
     ctx.clip();
     const innerGrad = ctx.createLinearGradient(bounds.x, bounds.y, bounds.x, bounds.y + bounds.h * 0.5);
-    innerGrad.addColorStop(0, 'rgba(255,255,255,0.04)');
+    innerGrad.addColorStop(0, rgbaFromRgb(rr, rg, rb, 0.06));
     innerGrad.addColorStop(1, 'rgba(255,255,255,0)');
     ctx.fillStyle = innerGrad;
     ctx.fillRect(bounds.x, bounds.y, bounds.w, bounds.h / 2);
     ctx.restore();
 
-    // Border
+    // Border glow — rarity color
     ctx.save();
-    ctx.shadowColor = accent;
-    ctx.shadowBlur = 6;
+    ctx.shadowColor = rarityColor;
+    ctx.shadowBlur = opt.rarity === 'epic' ? 12 : opt.rarity === 'rare' ? 8 : 4;
     roundRect(bounds.x, bounds.y, bounds.w, bounds.h, 8);
-    ctx.strokeStyle = 'rgba(255,255,255,0.1)';
+    ctx.strokeStyle = rgbaFromRgb(rr, rg, rb, opt.rarity === 'common' ? 0.15 : 0.35);
     ctx.lineWidth = 1;
     ctx.stroke();
     ctx.restore();
 
-    // Accent left edge bar
+    // Accent left edge bar — rarity color
     ctx.save();
     roundRect(bounds.x, bounds.y, bounds.w, bounds.h, 8);
     ctx.clip();
-    ctx.shadowColor = accent;
+    ctx.shadowColor = rarityColor;
     ctx.shadowBlur = 8;
-    ctx.fillStyle = accent;
+    ctx.fillStyle = rarityColor;
     ctx.fillRect(bounds.x, bounds.y + 8, 3, bounds.h - 16);
     ctx.restore();
+
+    // Rarity label (RARE/EPIC) — top-right, skip common
+    if (opt.rarity !== 'common') {
+      const label = opt.rarity.toUpperCase();
+      ctx.save();
+      ctx.font = `900 7px ${activeTheme.fonts.ui}`;
+      ctx.textAlign = 'right';
+      ctx.textBaseline = 'top';
+      ctx.fillStyle = rarityColor;
+      ctx.shadowColor = rarityColor;
+      ctx.shadowBlur = 4;
+      ctx.fillText(label, bounds.x + bounds.w - 8, bounds.y + 6);
+      ctx.restore();
+    }
 
     // Icon circle bg
     const iconCX = bounds.x + 32;
@@ -2013,12 +1896,13 @@ function drawLevelUp(game: Game): void {
     ctx.lineWidth = 0.5;
     ctx.stroke();
 
-    // Icon — ball preview for ball-type upgrades, text emoji for stat upgrades
-    if (opt.addBall) {
-      const ballColors = activeTheme.ball[opt.addBall];
+    // Icon — ball preview for ball-type or ball-upgrade cards, text emoji for stat upgrades
+    const ballPreviewType = opt.addBall || opt.upgradeBall;
+    if (ballPreviewType) {
+      const ballColors = activeTheme.ball[ballPreviewType];
       // Outer glow
       const glowGrad = ctx.createRadialGradient(iconCX, iconCY, 2, iconCX, iconCY, 14);
-      glowGrad.addColorStop(0, ballColors.glow + '4d'); // alpha ~0.3
+      glowGrad.addColorStop(0, ballColors.glow + '4d');
       glowGrad.addColorStop(1, ballColors.glow + '00');
       ctx.beginPath();
       ctx.arc(iconCX, iconCY, 14, 0, Math.PI * 2);
@@ -2041,6 +1925,18 @@ function drawLevelUp(game: Game): void {
       ctx.arc(iconCX - 2, iconCY - 3, 3, 0, Math.PI * 2);
       ctx.fillStyle = specGrad;
       ctx.fill();
+      // Arrow overlay for upgrade cards
+      if (opt.upgradeBall) {
+        ctx.save();
+        ctx.font = `900 14px ${activeTheme.fonts.ui}`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillStyle = rarityColor;
+        ctx.shadowColor = rarityColor;
+        ctx.shadowBlur = 6;
+        ctx.fillText('▲', iconCX + 12, iconCY - 10);
+        ctx.restore();
+      }
     } else {
       ctx.font = `700 20px ${activeTheme.fonts.ui}`;
       ctx.textAlign = 'center';
@@ -2188,11 +2084,6 @@ export function render(game: Game): void {
 
   drawBackground(dt, time);
 
-  for (const gem of game.gems) {
-    if (!gem.alive) continue;
-    drawGem(gem, time);
-  }
-
   for (const e of game.enemies) {
     if (!e.alive) continue;
     drawEnemy(e, time);
@@ -2210,7 +2101,7 @@ export function render(game: Game): void {
   }
 
   for (const b of game.balls) {
-    if (!b.active && !b.returning) continue;
+    if (!b.active) continue;
     drawBall(b, time);
   }
 
@@ -2224,8 +2115,8 @@ export function render(game: Game): void {
     drawLightningArcs(game.lightningArcs);
   }
 
-  drawPlayer(game);
-  drawAimLine(game);
+  drawBallSlots(game, time);
+  drawSwipeIndicator(game);
 
   if (game.juice.flashAlpha > 0) {
     drawFlash(game.juice.flashAlpha, game.juice.flashColor, WORLD_W, WORLD_H);

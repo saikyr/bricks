@@ -1,5 +1,8 @@
 import { Vec2, vec2, clamp } from '../utils/math';
-import { GEM_MAGNET_RADIUS, GEM_COLLECT_RADIUS, WORLD_H } from '../utils/constants';
+import { WORLD_H } from '../utils/constants';
+
+const GEM_MAGNET_RADIUS = 40;
+const GEM_COLLECT_RADIUS = 20;
 
 export interface Gem {
   pos: Vec2;

@@ -21,8 +21,8 @@ export function createWaveState(): WaveState {
 }
 
 function spawnRow(ws: WaveState, y: number, cols: number, cellSize: number, corridorX: number): void {
-  const hp = 20 + Math.floor(ws.rowsSpawned * 2);
-  const difficulty = Math.min(1, ws.elapsedTime / 300); // 0→1 over 5 minutes
+  const hp = 20 + Math.floor(ws.rowsSpawned * 1.2);
+  const difficulty = Math.min(1, ws.elapsedTime / 480); // 0→1 over 8 minutes
   const formation = generateFormation(Math.max(1, Math.floor(ws.rowsSpawned / 4) + 1), cols, difficulty);
   const row = formation.rows[0];
   for (let c = 0; c < row.length; c++) {
@@ -47,7 +47,7 @@ export function updateWave(ws: WaveState, dt: number, cols: number, cellSize: nu
 
   // Time-based scroll speed
   const scrollSpeed = Math.min(
-    ENEMY_SCROLL_SPEED + ws.elapsedTime * 0.08,
+    ENEMY_SCROLL_SPEED + ws.elapsedTime * 0.05,
     MAX_SCROLL_SPEED,
   );
 

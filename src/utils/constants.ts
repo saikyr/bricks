@@ -20,18 +20,16 @@ export const BALL_MAX_AGE = 8; // seconds before ball expires
 // Ball queue system
 import type { BallType } from '../entities/ball';
 export const START_BALL_QUEUE: BallType[] = ['normal', 'normal', 'normal'];
-export const START_FIRE_INTERVAL = 0.5; // seconds between shots
+export const MAGAZINE_CAP = 5;
 export const START_BALL_DAMAGE = 10;
-export const BALL_CATCH_RADIUS = 30; // proximity to catch returning ball
+export const BALL_RECYCLE_COOLDOWN = 0.3; // seconds before slot reopens
+export const MIN_SWIPE_DISTANCE = 20; // world units, min drag to fire
+export const BALL_SPAWN_Y = WORLD_H - 20;
 
 // Player
-export const PLAYER_SPEED = 220; // px/s, 2D movement
-export const PLAYER_RADIUS = 10; // visual/collision size
 export const PLAYER_MAX_HP = 10;
 
-// Gems / XP
-export const GEM_MAGNET_RADIUS = 40;
-export const GEM_COLLECT_RADIUS = 20;
+// XP
 export const XP_LEVEL_BASE = 20;
 export const XP_LEVEL_GROWTH = 1.35;
 
