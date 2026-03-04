@@ -11,13 +11,15 @@ export interface CollisionResult {
 export interface BallPhysicsResult {
   hits: CollisionResult[];
   bounced: boolean; // ball bounced off the floor this frame
+  wallBounced: boolean; // ball bounced off a wall or ceiling
 }
 
 export function updateBallPhysics(ball: Ball, dt: number, enemies: Enemy[], corridorX: number, corridorRight: number): BallPhysicsResult {
-  if (!ball.active) return { hits: [], bounced: false };
+  if (!ball.active) return { hits: [], bounced: false, wallBounced: false };
 
   const hits: CollisionResult[] = [];
   let bounced = false;
+  let wallBounced = false;
   const steps = 4;
   const subDt = dt / steps;
   const r = ball.radius;
@@ -31,16 +33,19 @@ export function updateBallPhysics(ball: Ball, dt: number, enemies: Enemy[], corr
     if (ball.pos.x - r < corridorX) {
       ball.pos.x = corridorX + r;
       ball.vel.x = Math.abs(ball.vel.x);
+      wallBounced = true;
     }
     if (ball.pos.x + r > corridorRight) {
       ball.pos.x = corridorRight - r;
       ball.vel.x = -Math.abs(ball.vel.x);
+      wallBounced = true;
     }
 
     // Ceiling
     if (ball.pos.y - r < 0) {
       ball.pos.y = r;
       ball.vel.y = Math.abs(ball.vel.y);
+      wallBounced = true;
     }
 
     // Floor — ball bounces off and enters returning state
@@ -69,7 +74,7 @@ export function updateBallPhysics(ball: Ball, dt: number, enemies: Enemy[], corr
     }
   }
 
-  return { hits, bounced };
+  return { hits, bounced, wallBounced };
 }
 
 /** Check overlap without modifying ball state */

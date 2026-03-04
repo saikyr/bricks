@@ -2013,12 +2013,41 @@ function drawLevelUp(game: Game): void {
     ctx.lineWidth = 0.5;
     ctx.stroke();
 
-    // Icon
-    ctx.font = `700 20px ${activeTheme.fonts.ui}`;
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.fillStyle = '#ffffff';
-    ctx.fillText(opt.icon, iconCX, iconCY + 1);
+    // Icon — ball preview for ball-type upgrades, text emoji for stat upgrades
+    if (opt.addBall) {
+      const ballColors = activeTheme.ball[opt.addBall];
+      // Outer glow
+      const glowGrad = ctx.createRadialGradient(iconCX, iconCY, 2, iconCX, iconCY, 14);
+      glowGrad.addColorStop(0, ballColors.glow + '4d'); // alpha ~0.3
+      glowGrad.addColorStop(1, ballColors.glow + '00');
+      ctx.beginPath();
+      ctx.arc(iconCX, iconCY, 14, 0, Math.PI * 2);
+      ctx.fillStyle = glowGrad;
+      ctx.fill();
+      // Ball body
+      const bodyGrad = ctx.createRadialGradient(iconCX - 2, iconCY - 2, 1, iconCX, iconCY, 8);
+      bodyGrad.addColorStop(0, '#ffffff');
+      bodyGrad.addColorStop(0.3, ballColors.core);
+      bodyGrad.addColorStop(1, ballColors.glow);
+      ctx.beginPath();
+      ctx.arc(iconCX, iconCY, 8, 0, Math.PI * 2);
+      ctx.fillStyle = bodyGrad;
+      ctx.fill();
+      // Specular highlight
+      const specGrad = ctx.createRadialGradient(iconCX - 2, iconCY - 3, 0, iconCX - 2, iconCY - 3, 3);
+      specGrad.addColorStop(0, 'rgba(255,255,255,0.7)');
+      specGrad.addColorStop(1, 'rgba(255,255,255,0)');
+      ctx.beginPath();
+      ctx.arc(iconCX - 2, iconCY - 3, 3, 0, Math.PI * 2);
+      ctx.fillStyle = specGrad;
+      ctx.fill();
+    } else {
+      ctx.font = `700 20px ${activeTheme.fonts.ui}`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillStyle = '#ffffff';
+      ctx.fillText(opt.icon, iconCX, iconCY + 1);
+    }
 
     // Name
     ctx.textAlign = 'left';

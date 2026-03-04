@@ -23,6 +23,11 @@ import {
 import { WaveState, createWaveState, updateWave } from './systems/wave';
 import { PlayerStats, UpgradeOption, rollUpgradeChoices } from './systems/upgrade';
 import { Vec2, vec2, clamp } from './utils/math';
+import {
+  playHit, playKill, playDamage, playGem, playLevelUp, playGameOver,
+  playShoot, playCatch, playWallBounce,
+  playLaser, playExplosion, playBleed, playBurn, playPoison, playLightning, playFreeze,
+} from './systems/audio';
 import { activeTheme } from './theme';
 import {
   WORLD_W, WORLD_H, PLAYER_RADIUS, PLAYER_MAX_HP,
@@ -120,6 +125,8 @@ export function createGame(input: InputState): Game {
       damage: START_BALL_DAMAGE,
       ballSpeed: BALL_SPEED,
       ballRadius: BALL_RADIUS,
+      critChance: 0,
+      xpMult: 1.0,
     },
     ballQueue: [...START_BALL_QUEUE],
     queueIndex: 0,
@@ -199,6 +206,7 @@ function handleEnemyKill(game: Game, enemy: Enemy, cx: number, cy: number): void
   triggerScreenPulse(game.juice, 0.24);
   triggerHitStop(game.juice, 0.022);
   triggerComboPulse(game.juice, 0.28);
+  playKill();
   const gemValue = Math.max(1, Math.ceil(enemy.maxHp * 0.1));
   game.gems.push(createGem(cx, cy, gemValue));
 }
@@ -260,6 +268,7 @@ function updatePlaying(game: Game, dt: number): void {
           ballRadius,
         );
         game.balls.push(ball);
+        playShoot();
         game.queueIndex = (slot + 1) % len;
         game.fireTimer = game.stats.fireInterval;
         break;
@@ -282,15 +291,19 @@ function updatePlaying(game: Game, dt: number): void {
         // Caught an active ball — slot becomes available
         ball.active = false;
         ball.returning = false;
+        playCatch();
         continue;
       }
 
       // Active ball — normal physics, hits enemies
       const result = updateBallPhysics(ball, dt, game.enemies, GRID_LEFT, GRID_RIGHT);
+      if (result.wallBounced) playWallBounce();
 
       for (const hit of result.hits) {
         const baseDmg = game.stats.damage;
         let totalDmg = baseDmg;
+        const isCrit = Math.random() < game.stats.critChance;
+        if (isCrit) totalDmg *= 2;
 
         // Freeze bonus: frozen enemies take extra damage
         totalDmg = Math.ceil(totalDmg * getDamageMult(hit.enemy.status));
@@ -302,10 +315,15 @@ function updatePlaying(game: Game, dt: number): void {
         }
 
         const killed = damageEnemy(hit.enemy, totalDmg);
-        game.damageNumbers.push(spawnDamageNumber(hit.hitPos.x, hit.hitPos.y, totalDmg));
-        triggerShake(game.juice, 0.65);
+        game.damageNumbers.push(
+          isCrit
+            ? spawnDamageNumber(hit.hitPos.x, hit.hitPos.y, totalDmg, '#ffe066', '#ffaa00')
+            : spawnDamageNumber(hit.hitPos.x, hit.hitPos.y, totalDmg)
+        );
+        triggerShake(game.juice, isCrit ? 1.2 : 0.65);
         triggerComboPulse(game.juice, 0.2);
         incrementCombo(game.juice);
+        playHit();
 
         // === On-hit effects (fire every hit, not just kill) ===
         const cx = hit.enemy.pos.x + hit.enemy.width / 2;
@@ -341,6 +359,7 @@ function updatePlaying(game: Game, dt: number): void {
           triggerShake(game.juice, 1.2);
           triggerFlash(game.juice, '#b388ff', 0.08);
           triggerScreenPulse(game.juice, 0.12);
+          playLaser();
         }
 
         // Explosive: AoE splash on every hit
@@ -364,6 +383,7 @@ function updatePlaying(game: Game, dt: number): void {
             }
           }
           game.particles.push(...spawnExplosionParticles(cx, cy));
+          playExplosion();
           triggerShake(game.juice, 1.5 + chainKills * 0.2);
           triggerFlash(game.juice, activeTheme.colors.flashChain, 0.1);
           triggerScreenPulse(game.juice, 0.15 + Math.min(chainKills * 0.04, 0.15));
@@ -372,16 +392,19 @@ function updatePlaying(game: Game, dt: number): void {
         // Bleed: add 1 stack
         if (ball.type === 'bleed' && hit.enemy.alive) {
           applyBleed(hit.enemy.status, 1);
+          playBleed();
         }
 
         // Burn: apply DoT
         if (ball.type === 'burn' && hit.enemy.alive) {
           applyBurn(hit.enemy.status, baseDmg * BURN_DMG_FRACTION, BURN_DURATION);
+          playBurn();
         }
 
         // Poison: apply DoT
         if (ball.type === 'poison' && hit.enemy.alive) {
           applyPoison(hit.enemy.status, baseDmg * POISON_DMG_FRACTION, POISON_DURATION);
+          playPoison();
         }
 
         // Lightning: chain to nearby enemies
@@ -415,6 +438,7 @@ function updatePlaying(game: Game, dt: number): void {
           if (nearby.length > 0) {
             triggerShake(game.juice, 1.0);
             triggerFlash(game.juice, '#88ddff', 0.06);
+            playLightning();
           }
         }
 
@@ -422,6 +446,7 @@ function updatePlaying(game: Game, dt: number): void {
         if (ball.type === 'freeze' && hit.enemy.alive) {
           if (Math.random() < FREEZE_CHANCE) {
             applyFreeze(hit.enemy.status, FREEZE_DURATION, FREEZE_DMG_MULT);
+            playFreeze();
           }
         }
 
@@ -459,6 +484,7 @@ function updatePlaying(game: Game, dt: number): void {
       // Catch — player touches returning ball → slot available again
       if (dist < BALL_CATCH_RADIUS) {
         ball.returning = false; // mark for removal
+        playCatch();
       }
     }
   }
@@ -483,9 +509,11 @@ function updatePlaying(game: Game, dt: number): void {
       triggerShake(game.juice, 3.2);
       triggerScreenPulse(game.juice, 0.5);
       triggerHitStop(game.juice, 0.018);
+      playDamage();
       if (game.playerHp <= 0) {
         game.playerHp = 0;
         game.state = 'GAME_OVER';
+        playGameOver();
         game.input.tapped = false;
         return;
       }
@@ -496,7 +524,8 @@ function updatePlaying(game: Game, dt: number): void {
   for (const gem of game.gems) {
     const collected = updateGem(gem, dt, game.playerPos);
     if (collected) {
-      game.xp += gem.value;
+      game.xp += Math.ceil(gem.value * game.stats.xpMult);
+      playGem();
       // Level up check
       if (game.xp >= game.xpToLevel) {
         game.xp -= game.xpToLevel;
@@ -506,6 +535,7 @@ function updatePlaying(game: Game, dt: number): void {
         game.state = 'LEVEL_UP';
         triggerFlash(game.juice, activeTheme.colors.flashKill, 0.18);
         triggerScreenPulse(game.juice, 0.75);
+        playLevelUp();
         game.input.tapped = false;
         return;
       }
@@ -566,9 +596,11 @@ function updatePlaying(game: Game, dt: number): void {
     triggerShake(game.juice, 4.2);
     triggerScreenPulse(game.juice, 0.58);
     triggerHitStop(game.juice, 0.016);
+    playDamage();
     if (game.playerHp <= 0) {
       game.playerHp = 0;
       game.state = 'GAME_OVER';
+      playGameOver();
       game.input.tapped = false;
       return;
     }
@@ -590,6 +622,9 @@ function updateLevelUp(game: Game): void {
         }
         if (choice.addBall) {
           game.ballQueue.push(choice.addBall);
+        }
+        if (choice.healHp) {
+          game.playerHp = Math.min(game.playerHp + choice.healHp, PLAYER_MAX_HP);
         }
         triggerScreenPulse(game.juice, 0.45);
         game.state = 'PLAYING';

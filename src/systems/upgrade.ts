@@ -5,6 +5,8 @@ export interface PlayerStats {
   damage: number;
   ballSpeed: number;
   ballRadius: number;
+  critChance: number;
+  xpMult: number;
 }
 
 export interface UpgradeOption {
@@ -14,6 +16,7 @@ export interface UpgradeOption {
   icon: string;
   apply?: (stats: PlayerStats) => void;
   addBall?: BallType;
+  healHp?: number;
 }
 
 const ALL_UPGRADES: UpgradeOption[] = [
@@ -25,11 +28,25 @@ const ALL_UPGRADES: UpgradeOption[] = [
     apply: (s) => { s.damage = Math.ceil(s.damage * 1.25); },
   },
   {
+    id: 'damage_big',
+    name: '+50% Damage',
+    description: 'Massive damage boost',
+    icon: '✦✦',
+    apply: (s) => { s.damage = Math.ceil(s.damage * 1.5); },
+  },
+  {
     id: 'fire_rate',
     name: 'Fire Rate +20%',
     description: 'Shoot 20% faster',
     icon: '»',
     apply: (s) => { s.fireInterval *= 0.8; },
+  },
+  {
+    id: 'fire_rate_big',
+    name: 'Double Fire Rate',
+    description: 'Twice the shots, twice the fun',
+    icon: '»»',
+    apply: (s) => { s.fireInterval *= 0.5; },
   },
   {
     id: 'ball_speed',
@@ -39,18 +56,25 @@ const ALL_UPGRADES: UpgradeOption[] = [
     apply: (s) => { s.ballSpeed *= 1.15; },
   },
   {
-    id: 'ball_size',
-    name: 'Ball Size +15%',
-    description: 'Bigger balls = easier hits',
-    icon: '◉',
-    apply: (s) => { s.ballRadius *= 1.15; },
+    id: 'crit_chance',
+    name: 'Critical Hit +10%',
+    description: 'Chance to deal double damage',
+    icon: '⚔',
+    apply: (s) => { s.critChance = Math.min(s.critChance + 0.10, 0.90); },
   },
   {
-    id: 'add_normal',
-    name: '+1 Ball',
-    description: 'Add a normal ball to your queue',
-    icon: '●',
-    addBall: 'normal',
+    id: 'xp_boost',
+    name: 'XP Boost +30%',
+    description: 'Gems give 30% more XP',
+    icon: '★',
+    apply: (s) => { s.xpMult += 0.30; },
+  },
+  {
+    id: 'heal_hp',
+    name: '+1 HP',
+    description: 'Restore one hit point',
+    icon: '♥',
+    healHp: 1,
   },
   {
     id: 'add_spectral',
@@ -98,7 +122,7 @@ const ALL_UPGRADES: UpgradeOption[] = [
     id: 'add_lightning',
     name: 'Lightning Ball',
     description: 'Chains to 3 nearby enemies',
-    icon: '⚡',
+    icon: '⛓',
     addBall: 'lightning',
   },
   {
