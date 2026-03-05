@@ -32,7 +32,7 @@ export const PLAYER_MAX_HP = 10;
 
 // XP
 export const XP_LEVEL_BASE = 20;
-export const XP_LEVEL_GROWTH = 1.35;
+export const XP_LEVEL_GROWTH = 1.2;
 
 // Enemy
 export const ENEMY_CORNER_RADIUS = 4;
